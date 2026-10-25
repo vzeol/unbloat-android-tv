@@ -264,7 +264,12 @@ $Protected = @("android","com.android.systemui","com.android.settings","com.andr
     "com.google.android.gms","com.google.android.gsf","com.android.providers.settings","com.android.providers.tv",
     "com.google.android.webview","com.android.webview","com.android.bluetooth","com.android.phone","com.android.shell",
     "com.android.packageinstaller","com.google.android.packageinstaller","com.android.inputdevices","com.android.externalstorage",
-    "com.android.providers.media","com.android.providers.downloads","com.google.android.inputmethod.latin",$ZenPkg)
+    "com.android.providers.media","com.android.providers.downloads","com.google.android.inputmethod.latin",
+    "com.mediatek.wwtv.tvcenter","com.google.android.leanbacklauncher.partnercustomizer",
+    "com.vestel.tv.service","com.vestel.tv.servicepatch",
+    "com.vestel.tv.keycontroller","com.vestel.tv.backlight",
+    "com.vestel.tv.rcupdater","com.mediatek.tv.service",
+    "com.mediatek.tvinput","com.mediatek.tv.factory",$ZenPkg)
 
 function Disable-Packages([string[]]$pkgs, [string]$why) {
     $st = Get-State
@@ -317,9 +322,20 @@ function Do-Slim {
     }
 
     Write-Host ""
-    if (YesNo "Accélérer les animations (×0,5) ?" "Speed up animations (×0.5)?" $true) {
-        foreach ($k in "window_animation_scale","transition_animation_scale","animator_duration_scale") { Sh "settings put global $k 0.5" | Out-Null }
-        Ok "Animations ×0,5" "Animations ×0.5"
+    $animToLower = @(); $animNeedsQuestion = $false
+    foreach ($k in "window_animation_scale","transition_animation_scale","animator_duration_scale") {
+        $v = ((Sh "settings get global $k") -join "").Trim()
+        if ($v -match '^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?$') {
+            if ([double]::Parse($v, [Globalization.CultureInfo]::InvariantCulture) -gt 0.5) {
+                $animToLower += $k; $animNeedsQuestion = $true
+            }
+        } else { $animToLower += $k; $animNeedsQuestion = $true }   # non défini = 1.0 par défaut
+    }
+    if (-not $animNeedsQuestion) {
+        Say "Animations déjà rapides ou coupées : inchangées" "Animations already fast or off: unchanged"
+    } elseif (YesNo "Accélérer les animations (×0,5) ?" "Speed up animations (×0.5)?" $true) {
+        foreach ($k in $animToLower) { Sh "settings put global $k 0.5" | Out-Null }
+        if ($animToLower.Count -gt 0) { Ok "Animations ×0,5" "Animations ×0.5" }
     }
     Say "Libération de la mémoire..." "Freeing memory..." "Cyan"
     Sh "am kill-all" | Out-Null
@@ -545,6 +561,18 @@ function Do-Launcher {
 
 # ---------------------------------------------------------------- 4. photos perso
 function Do-Photos {
+    if (YesNo "Fond noir uni (le plus léger en mémoire) ?" "Plain black background (lightest on memory)?" $false) {
+        $blackPng = Join-Path $Kit "ecran-accueil\fond-noir.png"
+        if (-not (Test-Path $blackPng)) { Err "fond-noir.png introuvable dans ecran-accueil/" "fond-noir.png not found in ecran-accueil/"; return }
+        Sh "rm -rf /sdcard/ZenHome" | Out-Null
+        Sh "mkdir -p /sdcard/ZenHome" | Out-Null
+        A push $blackPng /sdcard/ZenHome/noir.png | Out-Null
+        Sh "pm grant $ZenPkg android.permission.READ_EXTERNAL_STORAGE" | Out-Null
+        Sh "am force-stop $ZenPkg" | Out-Null
+        Sh "input keyevent KEYCODE_HOME" | Out-Null
+        Ok "Fond noir appliqué." "Black background applied."
+        return
+    }
     if (-not (Test-Path $PhotosDir)) { New-Item -ItemType Directory -Force $PhotosDir | Out-Null }
     $files = @(Get-ChildItem $PhotosDir -File | Where-Object { $_.Extension -match "^\.(jpe?g|png|webp)$" })
     Write-Host ""

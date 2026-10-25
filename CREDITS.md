@@ -28,4 +28,6 @@ The 19 photos bundled with Zen Home come from Wikimedia Commons ("Featured pictu
 
 Licences : [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
+Notes Vestel : liste `examples/toshiba-cosmos-android-tv` de [CleanYourTV](https://github.com/Gathin23/cleanyourtv). / Vestel notes: CleanYourTV's `examples/toshiba-cosmos-android-tv` list.
+
 Police / Font : Poppins (Indian Type Foundry), [SIL Open Font License 1.1](https://openfontlicense.org).

@@ -350,7 +350,12 @@ PROTECTED="android com.android.systemui com.android.settings com.android.tv.sett
 com.google.android.gms com.google.android.gsf com.android.providers.settings com.android.providers.tv
 com.google.android.webview com.android.webview com.android.bluetooth com.android.phone com.android.shell
 com.android.packageinstaller com.google.android.packageinstaller com.android.inputdevices com.android.externalstorage
-com.android.providers.media com.android.providers.downloads com.google.android.inputmethod.latin $ZEN_PKG"
+com.android.providers.media com.android.providers.downloads com.google.android.inputmethod.latin
+com.mediatek.wwtv.tvcenter com.google.android.leanbacklauncher.partnercustomizer
+com.vestel.tv.service com.vestel.tv.servicepatch
+com.vestel.tv.keycontroller com.vestel.tv.backlight
+com.vestel.tv.rcupdater com.mediatek.tv.service
+com.mediatek.tvinput com.mediatek.tv.factory $ZEN_PKG"
 PROTECTED="$(printf '%s' "$PROTECTED" | tr ' ' '\n')"
 
 Disable_Packages() {
@@ -419,9 +424,20 @@ Do_Slim() {
     fi
 
     echo
-    if YesNo "Accélérer les animations (×0,5) ?" "Speed up animations (×0.5)?" 1; then
-        for k in window_animation_scale transition_animation_scale animator_duration_scale; do Sh "settings put global $k 0.5" >/dev/null; done
-        Ok "Animations ×0,5" "Animations ×0.5"
+    local animToLower="" animNeedsQuestion=0 v
+    for k in window_animation_scale transition_animation_scale animator_duration_scale; do
+        v="$(trim "$(Sh "settings get global $k" | tr -d '\n')")"
+        if printf '%s\n' "$v" | LC_ALL=C awk '/^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?$/ { valid=1 } END { exit !valid }'; then
+            if LC_ALL=C awk -v v="$v" 'BEGIN { exit !(v > 0.5) }'; then
+                animToLower="$animToLower $k"; animNeedsQuestion=1
+            fi
+        else animToLower="$animToLower $k"; animNeedsQuestion=1; fi   # non défini = 1.0 par défaut
+    done
+    if [ "$animNeedsQuestion" = 0 ]; then
+        Say "Animations déjà rapides ou coupées : inchangées" "Animations already fast or off: unchanged"
+    elif YesNo "Accélérer les animations (×0,5) ?" "Speed up animations (×0.5)?" 1; then
+        for k in $animToLower; do Sh "settings put global $k 0.5" >/dev/null; done
+        [ -n "$animToLower" ] && Ok "Animations ×0,5" "Animations ×0.5"
     fi
     Say "Libération de la mémoire..." "Freeing memory..." Cyan
     Sh "am kill-all" >/dev/null
@@ -663,6 +679,18 @@ Do_Launcher() {
 
 # ---------------------------------------------------------------- 4. photos perso
 Do_Photos() {
+    if YesNo "Fond noir uni (le plus léger en mémoire) ?" "Plain black background (lightest on memory)?" 0; then
+        local blackPng="$KIT/ecran-accueil/fond-noir.png"
+        if [ ! -f "$blackPng" ]; then Err "fond-noir.png introuvable dans ecran-accueil/" "fond-noir.png not found in ecran-accueil/"; return; fi
+        Sh "rm -rf /sdcard/ZenHome" >/dev/null
+        Sh "mkdir -p /sdcard/ZenHome" >/dev/null
+        A push "$blackPng" /sdcard/ZenHome/noir.png >/dev/null
+        Sh "pm grant $ZEN_PKG android.permission.READ_EXTERNAL_STORAGE" >/dev/null
+        Sh "am force-stop $ZEN_PKG" >/dev/null
+        Sh "input keyevent KEYCODE_HOME" >/dev/null
+        Ok "Fond noir appliqué." "Black background applied."
+        return
+    fi
     local files=() f iv
     mkdir -p "$PHOTOS_DIR"
     for f in "$PHOTOS_DIR"/*; do

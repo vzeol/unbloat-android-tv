@@ -23,6 +23,9 @@ com.android.adservices.api                     | Services publicitaires Android 
 com.android.ondevicepersonalization.services   | Personnalisation publicitaire (Android 13+) | On-device ad personalization (Android 13+)
 com.android.printspooler                       | Service d'impression (inutile sur TV) | Print service (useless on a TV)
 
+com.google.android.syncadapters.calendar        | Synchronisation de l'agenda Google (inutile sur TV) | Google Calendar sync (useless on a TV)
+com.google.android.apps.nbu.smartconnect.tv     | Smart Connect : compteur de données et VPN d'économie de données | Smart Connect: data meter and data-saver VPN
+
 # ---------------- TCL (et Thomson fabriqué par TCL) ----------------
 com.tcl.bi                                     | Télémétrie TCL | TCL telemetry
 com.tcl.bootadservice                          | Pub au démarrage TCL | TCL boot ads
@@ -93,6 +96,10 @@ com.hisense.app.logreport,com.hisense.platformreport,com.hisense.logupload,com.h
 com.vidaa.oemtabcontentprovider                | Contenus de l'onglet promo VIDAA | VIDAA promo tab content
 
 # ---------------- Sharp / Toshiba / Thomson / Philco (Android) et autres ----------------
+# Testé sur Toshiba 43QA4163DG (Vestel Cosmos, Android TV 11) – octobre 2026
+android.autoinstalls.config.vestel.cosmos       | Installations automatiques d'applis partenaires Vestel | Vestel partner app auto-installs
+com.vestel.tv.speedup                          | « System Speed Up » Vestel (nettoyeur inutile) | Vestel "System Speed Up" (useless cleaner)
+com.mstar.android.tv.disclaimercustomization    | Écran d'avertissement de première configuration | First-setup disclaimer screen
 fusion.android.tv.demo                         | Mode démo magasin | Store demo mode
 tv.anoki.acr.anokiacroptin                     | Anoki : analyse de ce que vous regardez | Anoki: viewing analysis (ACR)
 com.vestel.vestelreporter                      | Télémétrie Vestel (Toshiba) | Vestel telemetry (Toshiba)

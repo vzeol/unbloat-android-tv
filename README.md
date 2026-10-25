@@ -87,7 +87,7 @@ Ces chiffres viennent d'une seule TV. Le gain sera différent sur la vôtre.
 | Fire TV sous **Vega OS** (Fire TV Stick 4K Select et modèles sortis depuis fin 2025) | ❌ Pas Android | ❌ |
 | Samsung (Tizen), LG (webOS), Hisense VIDAA, Roku, Apple TV | ❌ Pas Android | ❌ |
 
-**Testé en conditions réelles :** une TCL BeyondTV (Android 9). Testés aussi par des utilisateurs : une TCL BeyondTV2 (Android 9) et un projecteur XGIMI MoGo 3 Pro (Google TV, Android 11). Les autres appareils de ce tableau devraient fonctionner, car ils utilisent les mêmes commandes Android, mais ils n'ont pas tous été testés.
+**Testé en conditions réelles :** une TCL BeyondTV (Android 9) et une Toshiba 43QA4163DG (Vestel Cosmos, Android TV 11). Testés aussi par des utilisateurs : une TCL BeyondTV2 (Android 9) et un projecteur XGIMI MoGo 3 Pro (Google TV, Android 11). Les autres appareils de ce tableau devraient fonctionner, car ils utilisent les mêmes commandes Android, mais ils n'ont pas tous été testés.
 
 ### Fire TV / Fire Stick : changer l'accueil
 
@@ -115,6 +115,22 @@ Le kit contient des listes spécifiques pour chaque grande marque, en plus de la
 | **Nvidia Shield** | Télémétrie et diagnostics Nvidia | GeForce NOW, GameStream, superposition jeux |
 | **Amazon Fire TV** | Analyse de ce que vous regardez, identifiant pub, promos, métriques | Alexa, Amazon Photos/Music, jeux, Amazon Kids, Silk |
 | **XGIMI** (projecteurs) | Rapports de bug envoyés à XGIMI | Douban FM (radio chinoise) |
+
+### Notes Toshiba / Vestel (Android TV 11)
+
+Observations sur la Toshiba 43QA4163DG (Vestel Cosmos) :
+
+- Le débogage USB seul ouvre ADB sur le réseau, port 5555. Ce firmware n'a pas de bouton séparé de débogage réseau ou sans fil.
+- Ne désactivez jamais `com.mediatek.wwtv.tvcenter` (TV en direct et entrées HDMI), les services matériels `com.vestel.tv.*` et `com.mediatek.tv.*`, ni `com.google.android.leanbacklauncher.partnercustomizer`. Les paquets critiques identifiés sont désormais protégés par le kit ; sans le dernier, `com.mediatek.tv.service` peut planter en boucle sur les cartes Vestel/MTC et la touche Input cesse de fonctionner.
+- Les boutons YouTube et Prime Video de la télécommande sont gérés par le firmware Vestel sous Android : si ces applis sont désactivées, les boutons ne font rien, et aucun launcher ne peut les reprogrammer.
+- Cette TV n'a pas de microphone. L'Assistant Google (`katniss`) ne sert que pour « Hey Google » depuis un téléphone ou une enceinte Nest.
+- `fusion.android.tv.demo` a été désactivé sans problème sur cette TV (la touche Input fonctionne toujours), mais gère cette touche sur certaines cartes apparentées fabriquées par MTC : testez Input juste après l'option 2.
+- Play Protect sur Android 11 en français affiche « Appli non sécurisée bloquée » : choisissez « Plus de détails », puis « Installer quand même ». N'appuyez pas sur OK, qui annule.
+- L'accueil d'origine est `com.google.android.tvlauncher` ; la TV refuse Zen Home par défaut tant qu'il reste actif. L'option 3 gère sa désactivation.
+- Le Wi-Fi se coupe en veille et ADB se déconnecte : réveillez la TV avant chaque utilisation du kit.
+- Mesures sur cette TV, au repos sur l'accueil, 8 à 13 minutes après chaque redémarrage : RAM disponible environ 470 → 520 Mo ; swap compressé utilisé environ 230 → 164 Mo ; accueil 127 Mo (212 Mo après 9 jours sans redémarrage) → Zen Home 35 Mo avec fond noir (48 Mo avec les photos fournies). Mémoire réellement utilisée par les applis (`dumpsys meminfo`, « used pss ») : 870 Mo (avant, après 9 jours de fonctionnement) → 587 Mo. Le gain le plus visible : la TV est utilisable dès que l'accueil apparaît après l'allumage. Ces mesures sont propres à cette TV et les durées de fonctionnement diffèrent pour les relevés indiqués.
+- Astuce pour les TV de 1,3 Go : régler « Limite des processus en arrière-plan » sur 2 dans les options développeur aide. Ne désactivez pas ensuite tout le menu des options développeur : cela réinitialise les animations et cette limite.
+- `mediatek.factorymenu.ui` contient seulement les écrans du menu d'usine. Le service d'usine en fond est le paquet distinct `com.mediatek.tv.factory`, à ne jamais toucher. Ce firmware refuse de désactiver uniquement l'activité du menu (« Shell cannot change component state ») : le kit désactive donc tout le paquet d'interface si vous choisissez de le masquer.
 
 Ces listes ont été établies en octobre 2026 à partir de plusieurs sources communautaires (Universal Android Debloater, listes par modèle CleanYourTV, shield_optimizer, dumbtv, forums). Les paquets connus pour casser quelque chose (entrées HDMI, télécommande, mises à jour, réglages) ont été volontairement exclus.
 
@@ -181,6 +197,7 @@ Les versions Windows (`scripts/kit.ps1`) et macOS/Linux (`scripts/kit.sh`) font 
 | **Titre** (« Salon », « Chambre de Léa »…) | Option 3 du menu. Tapez votre titre, laissez vide pour afficher le nom de la TV (celui des paramètres Android), ou tapez `-` pour ne rien afficher. |
 | **Disposition** | Option 3 : **4 applis** (grandes tuiles), **6 applis** sur une ligne, ou **8 applis** sur deux lignes. |
 | **Applis du dock** | Option 3 : le kit liste les applis de streaming trouvées, choisissez les numéros dans l'ordre voulu. Sans choix, Zen Home prend automatiquement les premières parmi Netflix, YouTube, Prime Video, Disney+, myCANAL, Max, Apple TV… |
+| **Fond noir** | Option 4 : répondez oui à « Fond noir uni » pour le fond le plus léger en mémoire. Pour revenir aux photos fournies, videz `mes_photos`, relancez l’option 4, refusez le fond noir et confirmez le retour aux photos fournies. |
 | **Vos photos** | Copiez vos `.jpg` (format paysage, idéalement 1920×1080) dans le dossier **`mes_photos`**, puis lancez l'option 4. Pour revenir aux photos fournies, videz le dossier et relancez l'option 4. |
 | **Vitesse de défilement** | Option 4 : nombre de secondes entre deux photos (60 par défaut). |
 | **Ce qui est désactivé** | Modifiez `scripts/listes/pubs_telemetrie.txt` (désactivé après une seule confirmation) et `scripts/listes/optionnel.txt` (le kit pose la question pour chaque ligne). Une ligne = `nom.du.paquet | description FR | English description`. Pour regrouper plusieurs paquets d'une même fonction sous une seule question : `paquet1,paquet2 | ... | ...`. |

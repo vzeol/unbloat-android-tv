@@ -18,6 +18,8 @@ com.google.android.music                       | Google Play Musique | Google Pl
 com.google.android.youtube.tvmusic             | YouTube Music | YouTube Music
 com.google.android.play.games                  | Google Play Jeux | Google Play Games
 
+com.google.android.tts                         | Synthèse vocale Google (lecture d'écran) | Google text-to-speech (screen reader)
+
 # ---------------- TCL ----------------
 com.tcl.waterfall.overseas,com.tcl.channelplus | TCL Channel (chaînes gratuites avec pubs) | TCL Channel (free channels with ads)
 com.tcl.MultiScreenInteraction_TV,com.tcl.miracast | Recopie d'écran / MagiConnect / T-Cast | Screen mirroring / MagiConnect / T-Cast
@@ -63,6 +65,10 @@ com.vt.hishow                                  | Family Moment (photos et écono
 com.hisense.tv.videochat.social,com.hisense.tv.videoconference | Appel vidéo Hisense | Hisense video calls
 
 # ---------------- Sharp / Toshiba / Thomson / Philco ----------------
+com.vestel.tv.eib                              | Manuel de l'utilisateur électronique Vestel | Vestel electronic user manual
+mediatek.factorymenu.ui                        | Menu d'usine MediaTek (réservé aux techniciens ; le masquer évite une fausse manip) | MediaTek factory menu (technicians only; hiding it avoids accidents)
+com.mediatek.wwtv.mediaplayer                   | Lecteur de clé USB MediaTek | MediaTek USB media player
+com.mediatek.tv.freeviewplay                    | Guide Freeview Play (Royaume-Uni) | Freeview Play guide (UK)
 com.cltv.fast,com.apps.channels                | Chaînes gratuites du fabricant | Manufacturer free channels
 com.smartdevice.dtv.icast                      | Recopie d'écran iCast | iCast screen mirroring
 

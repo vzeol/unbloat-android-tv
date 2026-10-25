@@ -87,7 +87,7 @@ These figures come from a single TV. Your results will differ.
 | Fire TV running **Vega OS** (Fire TV Stick 4K Select and models released since late 2025) | ❌ Not Android | ❌ |
 | Samsung (Tizen), LG (webOS), Hisense VIDAA, Roku, Apple TV | ❌ Not Android | ❌ |
 
-**Tested for real on:** a TCL BeyondTV (Android 9). Also tested by users: a TCL BeyondTV2 (Android 9) and an XGIMI MoGo 3 Pro projector (Google TV, Android 11). The other devices in this table should work, since they use the same Android commands, but they have not all been tested.
+**Tested for real on:** a TCL BeyondTV (Android 9) and a Toshiba 43QA4163DG (Vestel Cosmos, Android TV 11). Also tested by users: a TCL BeyondTV2 (Android 9) and an XGIMI MoGo 3 Pro projector (Google TV, Android 11). The other devices in this table should work, since they use the same Android commands, but they have not all been tested.
 
 ### Fire TV / Fire Stick: changing the home screen
 
@@ -115,6 +115,22 @@ On top of the Google part shared by every Android TV, the kit includes specific 
 | **Nvidia Shield** | Nvidia telemetry and diagnostics | GeForce NOW, GameStream, game overlay |
 | **Amazon Fire TV** | Viewing analysis, ad ID, promos, metrics | Alexa, Amazon Photos/Music, games, Amazon Kids, Silk |
 | **XGIMI** (projectors) | Bug reports sent to XGIMI | Douban FM (Chinese radio) |
+
+### Toshiba / Vestel notes (Android TV 11)
+
+Observations on the Toshiba 43QA4163DG (Vestel Cosmos):
+
+- USB debugging alone opens network ADB on port 5555. This firmware has no separate network or wireless debugging toggle.
+- Never disable `com.mediatek.wwtv.tvcenter` (Live TV and HDMI inputs), the `com.vestel.tv.*` and `com.mediatek.tv.*` hardware services, or `com.google.android.leanbacklauncher.partnercustomizer`. The identified critical packages are now protected by the kit; without the last one, `com.mediatek.tv.service` can crash-loop on Vestel/MTC boards and the Input key stops working.
+- The remote's YouTube and Prime Video buttons are handled by Vestel firmware below Android: if those apps are disabled, the buttons do nothing, and no launcher can remap them.
+- This TV has no microphone. Google Assistant (`katniss`) is only useful for “Hey Google” from a phone or Nest speaker.
+- `fusion.android.tv.demo` was disabled without issue on this TV (Input still works), but it handles the Input key on some MTC-built sibling boards: test Input right after option 2.
+- Play Protect on Android 11 in French shows “Appli non sécurisée bloquée”: choose “Plus de détails”, then “Installer quand même”. Do not press OK, which cancels.
+- The original home screen is `com.google.android.tvlauncher`; the TV refuses Zen Home as default until it is disabled. Option 3 handles this.
+- Wi-Fi turns off in standby, so ADB drops: wake the TV before each run.
+- Measurements on this TV, idle on the home screen, 8–13 minutes after each reboot: available RAM about 470 → 520 MB; compressed swap in use about 230 → 164 MB; home screen 127 MB (212 MB after 9 days without reboot) → Zen Home 35 MB with the black background (48 MB with bundled photos). Memory actually used by apps (`dumpsys meminfo`, “used pss”): 870 MB (before, 9 days uptime) → 587 MB. Biggest visible gain: the TV is usable as soon as the home screen appears after power-on. These measurements are specific to this TV, and uptime differs for the readings noted above.
+- Tip for 1.3 GB TVs: setting “Background process limit” to 2 in developer options helps. Do not switch the whole developer options menu off afterwards: it resets animations and that limit.
+- `mediatek.factorymenu.ui` contains only the factory menu screens. The background factory service is the separate package `com.mediatek.tv.factory`, which must never be touched. This firmware refuses to disable just the menu activity (“Shell cannot change component state”), so the kit disables the whole UI package if you choose to hide it.
 
 These lists were built in October 2026 from several community sources (Universal Android Debloater, CleanYourTV per-model lists, shield_optimizer, dumbtv, forums). Packages known to break something (HDMI inputs, remote, updates, settings) were deliberately left out.
 
@@ -181,6 +197,7 @@ The Windows (`scripts/kit.ps1`) and macOS/Linux (`scripts/kit.sh`) versions do e
 | **Title** ("Living room", "Emma's room"…) | Menu option 3. Type your title, leave it empty to show the TV's name (the one in the Android settings), or type `-` to show nothing. |
 | **Layout** | Option 3: **4 apps** (large tiles), **6 apps** in one row, or **8 apps** in two rows. |
 | **Dock apps** | Option 3: the kit lists the streaming apps it found; pick the numbers in the order you want. Without a choice, Zen Home automatically picks the first ones among Netflix, YouTube, Prime Video, Disney+, myCANAL, Max, Apple TV… |
+| **Black background** | Option 4: answer yes to “Plain black background” for the lightest background on memory. To restore bundled photos, empty `mes_photos`, run option 4, decline the black background and confirm restoring bundled photos. |
 | **Your photos** | Copy your `.jpg` files (landscape, ideally 1920×1080) into the **`mes_photos`** folder, then run option 4. To go back to the bundled photos, empty the folder and run option 4 again. |
 | **Rotation speed** | Option 4: number of seconds between photos (60 by default). |
 | **What gets disabled** | Edit `scripts/listes/pubs_telemetrie.txt` (disabled after a single confirmation) and `scripts/listes/optionnel.txt` (the kit asks for each line). One line = `package.name | French description | English description`. To group several packages of one feature under a single question: `package1,package2 | ... | ...`. |
