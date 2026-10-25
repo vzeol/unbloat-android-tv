@@ -1,6 +1,6 @@
 ﻿# =====================================================================
-#  Kit TV Android - allègement réversible + écran d'accueil Zen Home
-#  Android TV slimming kit - reversible debloat + Zen Home launcher
+#  Kit TV Toshiba / Vestel Cosmos - allègement réversible + écran d'accueil Zen Home
+#  Toshiba / Vestel Cosmos kit - reversible debloat + Zen Home launcher
 #  Windows PowerShell 5.1+  -  lancé par LANCER.bat / started by LANCER.bat
 # =====================================================================
 $ErrorActionPreference = "Continue"
@@ -15,6 +15,7 @@ $ConfFile = Join-Path $Kit "config_tv.json"
 $ZenPkg   = "tv.zenhome"
 $GtvFallback = "com.google.android.tungsten.setupwraith"   # accueil de secours de Google TV
 $LangFr = ((Get-UICulture).Name -like "fr*") -or ((Get-Culture).Name -like "fr*")
+$CosmosFingerprint = "Vestel/Cosmos170/yeoksam:11/RTOC.251019.001/14296264:user/release-keys"
 New-Item -ItemType Directory -Force $Tools, $Saves | Out-Null
 
 function T([string]$txtFr, [string]$txtEn) { if ($script:LangFr) { $txtFr } else { $txtEn } }
@@ -64,10 +65,28 @@ function Get-TvIdentity {
         Id = ($id -replace '[^A-Za-z0-9_-]', '_')
         Brand = Prop "ro.product.brand"; Model = Prop "ro.product.model"
         Manufacturer = Prop "ro.product.manufacturer"
+        Device = Prop "ro.product.device"; Fingerprint = Prop "ro.build.fingerprint"
         Android = Prop "ro.build.version.release"; Sdk = Prop "ro.build.version.sdk"
         Patch = Prop "ro.build.version.security_patch"; Build = Prop "ro.build.display.id"
         Name = ((Sh "settings get global device_name") -join "").Trim()
     }
+}
+
+function Test-Cosmos {
+    return ($script:Info -and ($script:Info.Manufacturer -eq "Vestel" -or $script:Info.Brand -eq "Vestel") -and
+        ($script:Info.Device -eq "yeoksam" -or $script:Info.Model -eq "Cosmos"))
+}
+function Show-Profile {
+    if (-not (Test-Cosmos)) { return }
+    Say "Profil testé détecté : Toshiba / Vestel Cosmos (43QA4163DG)" "Tested profile detected: Toshiba / Vestel Cosmos (43QA4163DG)" "Cyan"
+    if ($script:Info.Fingerprint -cne $CosmosFingerprint) {
+        Warn "Firmware différent de l'exemplaire testé : lisez scripts/profils/toshiba-cosmos.txt avant de continuer." "Firmware differs from the tested unit: read scripts/profils/toshiba-cosmos.txt before continuing."
+    }
+}
+function Cosmos-Reminders {
+    if (-not (Test-Cosmos)) { return }
+    Say "À la main : limite des processus en arrière-plan = 2 (facultatif ; 0 recharge chaque appli)." "By hand: background process limit = 2 (optional; 0 cold-starts every app)." "Cyan"
+    Say "À la fin, coupez seulement « Débogage USB », pas tout « Options pour les développeurs » : cela réinitialise animations et limite des processus." "At the end, turn off only USB debugging, not Developer options: the master switch resets animations and the process limit." "Yellow"
 }
 
 function Connect-Target([string]$target) {
@@ -85,7 +104,7 @@ function Connect-Target([string]$target) {
         elseif ($out -match "refused|10061") {
             if (++$refused -ge 3) {
                 Err "La TV répond mais refuse la connexion : son débogage réseau n'est pas actif." "The TV answers but refuses the connection: its network debugging is not enabled."
-                Say "   Dans les options pour les développeurs, activez « Débogage ADB réseau » (ou « ADB over network »). Sur Android 11 et plus, utilisez « Débogage sans fil » et le jumelage par code." "   In developer options, enable 'Network ADB debugging' (or 'ADB over network'). On Android 11 and later, use 'Wireless debugging' and pairing with a code." "DarkGray"
+                Say "   Toshiba Cosmos : activez seulement « Débogage USB » (port 5555), puis réveillez la TV. Autres TV : selon le modèle, Débogage ADB réseau ou Débogage sans fil avec jumelage." "   Toshiba Cosmos: enable only USB debugging (port 5555), then wake the TV. Other TVs: depending on model, Network ADB or Wireless debugging with pairing." "DarkGray"
                 return $false
             }
         }
@@ -106,7 +125,7 @@ function Choose-TV {
     Write-Host ""
     Say "Trouvez l'adresse IP de la TV : Paramètres > Réseau (ou À propos > État)." "Find the TV's IP address: Settings > Network (or About > Status)." "Cyan"
     Say "Le débogage ADB doit être activé (voir README)." "ADB debugging must be enabled (see README)." "DarkGray"
-    $ip = (Ask "Adresse IP de la TV (ex. 192.168.1.50)" "TV IP address (e.g. 192.168.1.50)").Trim()
+    $ip = (Ask "Adresse IP de la TV" "TV IP address").Trim()
     if (-not $ip) { return $false }
     if (-not (Connect-Target $ip)) {
         Err "Connexion impossible." "Could not connect."
@@ -119,10 +138,13 @@ function Choose-TV {
         } else { return $false }
     }
     $info = Get-TvIdentity
+    $script:Info = $info
     Write-Host ""
     Say "Appareil trouvé :" "Device found:" "White"
     Write-Host ("   {0} {1}  ({2})  - Android {3}, patch {4}" -f $info.Brand, $info.Model, $info.Name, $info.Android, $info.Patch)
     Write-Host ("   ID : {0}" -f $info.Id)
+    Write-Host ("   Fingerprint : {0}" -f $info.Fingerprint)
+    Show-Profile
     if (-not (YesNo "Est-ce bien la TV que vous voulez modifier ?" "Is this the TV you want to modify?" $true)) {
         & $adb disconnect $script:T_ | Out-Null; $script:T_ = $null; return $false
     }
@@ -149,6 +171,8 @@ function Ensure-TV {
     }
     $script:Id = $info.Id; $script:Info = $info
     Ok "TV vérifiée : $($c.label)" "TV verified: $($c.label)"
+    Write-Host ("   Fingerprint : {0}" -f $info.Fingerprint)
+    Show-Profile
     return $true
 }
 
@@ -265,21 +289,33 @@ $Protected = @("android","com.android.systemui","com.android.settings","com.andr
     "com.google.android.webview","com.android.webview","com.android.bluetooth","com.android.phone","com.android.shell",
     "com.android.packageinstaller","com.google.android.packageinstaller","com.android.inputdevices","com.android.externalstorage",
     "com.android.providers.media","com.android.providers.downloads","com.google.android.inputmethod.latin",
-    "com.mediatek.wwtv.tvcenter","com.google.android.leanbacklauncher.partnercustomizer",
+    "com.mediatek.wwtv.tvcenter","com.mediatek.wwtv.webview","com.google.android.leanbacklauncher.partnercustomizer",
     "com.vestel.tv.service","com.vestel.tv.servicepatch",
     "com.vestel.tv.keycontroller","com.vestel.tv.backlight",
     "com.vestel.tv.rcupdater","com.mediatek.tv.service",
-    "com.mediatek.tvinput","com.mediatek.tv.factory",$ZenPkg)
+    "com.mediatek.tvinput","com.mediatek.tv.factory","com.mediatek.tvinputservice.arbitratorservice",
+    "com.mediatek.network","com.mediatek.tv.network","com.google.android.tungsten.setupwraith",$ZenPkg)
+
+function Test-Protected([string]$p, [string]$why = "slim") {
+    # Preserve the existing Google TV fallback handling outside the Cosmos profile.
+    if ($p -eq $GtvFallback -and $why -eq "launcher" -and -not (Test-Cosmos)) { return $false }
+    return ($Protected -contains $p)
+}
 
 function Disable-Packages([string[]]$pkgs, [string]$why) {
+    $script:LastDisabled = @()
     $st = Get-State
     $homePkg = (Get-Home) -replace "/.*$", ""
     $skipped = 0
     foreach ($p in $pkgs) {
-        if ($Protected -contains $p) { Warn "$p protégé, ignoré" "$p is protected, skipped"; continue }
+        if (Test-Protected $p $why) { Warn "$p protégé, ignoré" "$p is protected, skipped"; continue }
         if ($p -eq $homePkg -and $why -ne "launcher") { Warn "$p est l'écran d'accueil actuel : ignoré (voir menu 3)" "$p is the current home screen: skipped (see menu 3)"; continue }
         $r = (Sh "pm disable-user --user 0 $p") -join " "
-        if ($r -match "disabled") { Ok $p $p; if ($st.disabled -notcontains $p) { $st.disabled += $p } }
+        if ($r -match "new state:\s*disabled(?:-user)?\b") {
+            Ok $p $p; $script:LastDisabled += $p
+            if ($st.disabled -notcontains $p) { $st.disabled += $p }
+            Save-State $st
+        }
         else {
             # la TV refuse (paquet systeme verrouille, absent, etc.) : on ignore et on continue
             Write-Host ("  - " + $p + (T " : ignoré (non modifiable sur cette TV)" " : skipped (cannot be changed on this TV)")) -ForegroundColor DarkGray
@@ -290,13 +326,109 @@ function Disable-Packages([string[]]$pkgs, [string]$why) {
     if ($skipped -gt 0) { Say "  $skipped élément(s) ignoré(s) : c'est normal, rien n'a été modifié pour eux." "  $skipped item(s) skipped: that's normal, nothing was changed for them." "DarkGray" }
 }
 
+function Read-Profile {
+    $batches = @(); $batch = $null
+    foreach ($raw in Get-Content (Join-Path $Scripts "profils\toshiba-cosmos.txt") -Encoding UTF8 -ErrorAction Stop) {
+        $l = $raw.Trim()
+        if (-not $l -or $l.StartsWith("#")) { continue }
+        if ($l -match '^\[garder\]') { break }
+        if ($l -match '^\[([^]]+)\]\s*(.+)$') {
+            $phase = if ($Matches[1] -like "apres zen*") { "zen" } else { "slim" }
+            $titles = $Matches[2] -split '\|'
+            if ($titles.Count -ne 2) { throw "Invalid profile heading: $l" }
+            $batch = [pscustomobject]@{ Phase = $phase; Fr = $titles[0].Trim(); En = $titles[1].Trim(); TestFr = ""; TestEn = ""; Entries = @() }
+            $batches += $batch
+        } elseif ($l.StartsWith("test:")) {
+            $tests = $l.Substring(5) -split '\|'
+            if (-not $batch -or $tests.Count -ne 2) { throw "Invalid profile test: $l" }
+            $batch.TestFr = $tests[0].Trim(); $batch.TestEn = $tests[1].Trim()
+        } else {
+            $p = @($l -split '\|' | ForEach-Object { $_.Trim() })
+            if (-not $batch -or $p.Count -ne 4 -or $p[0] -notmatch '^[a-zA-Z0-9_.]+$' -or $p[3] -notin @("auto","ask","alone")) { throw "Invalid profile entry: $l" }
+            $batch.Entries += [pscustomobject]@{ Pkg = $p[0]; Fr = $p[1]; En = $p[2]; Mode = $p[3] }
+        }
+    }
+    foreach ($b in $batches) {
+        if (-not $b.TestFr -or -not $b.TestEn -or $b.Entries.Count -eq 0) { throw "Incomplete profile batch" }
+        if (@($b.Entries | Where-Object { $_.Mode -eq "alone" }).Count -gt 0 -and $b.Entries.Count -ne 1) { throw "alone requires its own batch" }
+    }
+    return $batches
+}
+
+function Undo-ProfileBatch([string[]]$pkgs) {
+    $st = Get-State
+    foreach ($p in $pkgs) {
+        $r = (Sh "pm enable $p") -join " "
+        if ($r -match 'new state:\s*enabled\b') {
+            Ok "$p réactivé" "$p re-enabled"
+            $st.disabled = @($st.disabled | Where-Object { $_ -ne $p })
+            Save-State $st
+        } else { Warn "$p : réactivation refusée ; conservé dans l'état pour l'option 6." "${p}: re-enable failed; retained in state for option 6." }
+    }
+}
+
+function Run-Profile([string]$phase) {
+    # Parse and validate the entire file before changing a package.
+    $batches = @(Read-Profile)
+    foreach ($batch in $batches | Where-Object { $_.Phase -eq $phase }) {
+        $enabled = @(Get-Packages "-e"); $homePkg = (Get-Home) -replace '/.*$', ''
+        $entries = @($batch.Entries | Where-Object {
+            $enabled -contains $_.Pkg -and $_.Pkg -ne $homePkg -and -not (Test-Protected $_.Pkg) -and
+            $_.Pkg -notin @("com.google.android.tvlauncher","com.google.android.tvrecommendations")
+        })
+        if ($entries.Count -eq 0) { continue }
+        Say $batch.Fr $batch.En "White"
+        foreach ($e in $entries) { Write-Host ("   {0} | {1} [{2}]" -f $e.Pkg, (T $e.Fr $e.En), $e.Mode) }
+        $changed = @(); $autoAsked = $false; $autoYes = $false
+        foreach ($e in $entries) {
+            if (@(Get-Packages "-e") -notcontains $e.Pkg) { continue }
+            $disable = $false
+            switch ($e.Mode) {
+                "auto" {
+                    if (-not $autoAsked) {
+                        $autoYes = YesNo "Désactiver les éléments d'office de ce lot ?" "Disable this batch's automatic items?" $true
+                        $autoAsked = $true
+                    }
+                    $disable = $autoYes
+                }
+                "ask" { $disable = -not (YesNo ("Utilisez-vous : " + $e.Fr + " ?") ("Do you use: " + $e.En + "?") $true) }
+                "alone" { $disable = YesNo ("Désactiver séparément : " + $e.Fr + " ? Test Input juste après.") ("Disable separately: " + $e.En + "? Test Input immediately afterwards.") $false }
+            }
+            if ($disable) { Disable-Packages @($e.Pkg) "profile"; $changed += $script:LastDisabled }
+        }
+        if ($changed.Count -gt 0) {
+            Say $batch.TestFr $batch.TestEn "Cyan"
+            if (-not (YesNo "Tout fonctionne ? (o = continuer / n = annuler ce lot)" "Everything works? (y = continue / n = undo this batch)" $false)) {
+                Undo-ProfileBatch $changed
+                Warn "Profil arrêté après annulation du lot." "Profile stopped after undoing the batch."
+                return $false
+            }
+        }
+    }
+    return $true
+}
+
 # ---------------------------------------------------------------- 2. allègement
 function Do-Slim {
     Ensure-Backup
+    if (Test-Cosmos) {
+        Show-Profile
+        Say "1. Suivre le profil testé (recommandé)" "1. Follow the tested profile (recommended)" "White"
+        Say "2. Listes génériques" "2. Generic lists" "White"
+        if ((Ask "Votre choix (Entrée = 1)" "Your choice (Enter = 1)").Trim() -ne "2") {
+            try {
+                if (Run-Profile "slim") {
+                    if ((Get-Home) -like "$ZenPkg/*") { [void](Run-Profile "zen") }
+                    else { Say "Les lots après Zen Home seront proposés par l'option 3." "The after-Zen-Home batches will be offered by option 3." "Cyan" }
+                }
+            } finally { Cosmos-Reminders }
+            return
+        }
+    }
     $enabled = @(Get-Packages "-e")
     $homePkg = (Get-Home) -replace "/.*$", ""
     # ne garde que les paquets presents et actifs sur CETTE TV (les autres sont ignores)
-    $keep = { param($e) $e.Pkgs = @($e.Pkgs | Where-Object { $enabled -contains $_ -and $_ -ne $homePkg }); $e.Pkgs.Count -gt 0 }
+    $keep = { param($e) $e.Pkgs = @($e.Pkgs | Where-Object { $enabled -contains $_ -and $_ -ne $homePkg -and -not (Test-Protected $_) }); $e.Pkgs.Count -gt 0 }
     $safe = @(Read-List "pubs_telemetrie.txt" | Where-Object { & $keep $_ })
     $opt  = @(Read-List "optionnel.txt"       | Where-Object { & $keep $_ })
     $before = Get-Perf
@@ -348,6 +480,7 @@ function Do-Slim {
     Write-Host ("   RAM " + (T "disponible" "available") + " : $($before.RamDispoMo) Mo → $($after.RamDispoMo) Mo") -ForegroundColor White
     Write-Host ("   CPU : $($before.CpuPct) % → $($after.CpuPct) %  " + (T "(instantané, varie d'une mesure à l'autre)" "(snapshot, varies between readings)")) -ForegroundColor White
     Say "Astuce : le plus gros gain vient souvent du remplacement de l'écran d'accueil (menu 3)." "Tip: the biggest gain often comes from replacing the home screen (menu 3)." "DarkGray"
+    Cosmos-Reminders
 }
 
 # ---------------------------------------------------------------- 3. écran d'accueil
@@ -422,7 +555,7 @@ function Disable-OrigHome([string]$origPkg) {
     $toOff = @($origPkg)
     $wraithKept = $false
     # Google TV : sans son accueil, l'écran de secours setupwraith prend la main (logo Google TV en boucle)
-    if ((Get-Packages "-e") -contains $GtvFallback) {
+    if (-not (Test-Cosmos) -and (Get-Packages "-e") -contains $GtvFallback) {
         # mais si le Wi-Fi lui appartient, Android supprime ce réseau en le désactivant : la TV perdrait sa connexion (et ADB)
         if ((Test-WraithWifi) -and (Test-OnEthernet)) {
             Warn "Un réseau Wi-Fi enregistré appartient à l'écran de secours Google (setupwraith). La TV est branchée en Ethernet : le kit peut quand même le désactiver, mais ce réseau Wi-Fi sera supprimé (à reconfigurer ensuite si vous en avez besoin)." "A saved Wi-Fi network belongs to the Google fallback screen (setupwraith). The TV is on Ethernet: the kit can still disable it, but that Wi-Fi network will be deleted (set it up again later if you need it)."
@@ -465,6 +598,30 @@ function Disable-OrigHome([string]$origPkg) {
     return $false
 }
 
+function Complete-CosmosHome([string]$origPkg) {
+    $before = @(Get-Packages "-e")
+    Sh "am start -n $ZenPkg/.Home" | Out-Null
+    if (-not (YesNo "Vérifiez Zen Home, Entrées TV et Input → HDMI. Tout fonctionne avant de couper l'ancien accueil ?" "Check Zen Home, TV inputs and Input → HDMI. Does everything work before disabling the old home?" $false)) { return }
+    if ($origPkg -and $origPkg -ne $ZenPkg -and $before -contains $origPkg) {
+        if (-not (YesNo "Désactiver l'ancien accueil et ses recommandations (réversible) ?" "Disable the old home and its recommendations (reversible)?" $true)) { return }
+        if (-not (Disable-OrigHome $origPkg)) { return }
+    }
+    if ((Get-Home) -notlike "$ZenPkg/*") { Warn "Zen Home doit être l'accueil avant de continuer." "Zen Home must be the default home before continuing."; return }
+    if (@(Get-Packages "-e") -contains "com.google.android.tvrecommendations") {
+        Disable-Packages @("com.google.android.tvrecommendations") "launcher"
+    }
+    $st = Get-State
+    $changed = @($st.disabled | Where-Object { $before -contains $_ -and $_ -in @($origPkg,"com.google.android.tvrecommendations") })
+    if ($changed.Count -gt 0 -and -not (YesNo "Testez Accueil, Entrées TV, Input → HDMI et Netflix. Tout fonctionne ? (o = continuer / n = annuler ce lot)" "Test Home, TV inputs, Input → HDMI and Netflix. Everything works? (y = continue / n = undo this batch)" $false)) {
+        Undo-ProfileBatch $changed
+        $st = Get-State; $st.launcher_disabled = $null; Save-State $st
+        Sh "input keyevent KEYCODE_HOME" | Out-Null
+        return
+    }
+    [void](Run-Profile "zen")
+    Capture-TV "zen_home" | Out-Null
+}
+
 function Do-Launcher {
     if ($script:Info.Brand -match "Amazon" -or $script:Info.Manufacturer -match "Amazon") {
         Err "Fire TV : Amazon bloque le remplacement de l'écran d'accueil. Utilisez seulement l'allègement (menu 2)." "Fire TV: Amazon blocks replacing the home screen. Use slimming only (menu 2)."
@@ -482,7 +639,7 @@ function Do-Launcher {
     if (-not $devName -or $devName -eq "null") { $devName = $script:Info.Model }
     Say "Titre affiché en haut à gauche de l'écran d'accueil :" "Title shown at the top left of the home screen:" "White"
     Say "   Entrée = nom de la TV (« $devName »)   ·   tapez - pour ne rien afficher" "   Enter = the TV's name ('$devName')   ·   type - to show nothing" "DarkGray"
-    $title = (Ask "Titre (ex. « Salon », « Chambre de Léa »)" "Title (e.g. 'Living room', 'Emma's room')").Trim()
+    $title = (Ask "Titre (ex. « Accueil »)" "Title (e.g. 'Home')").Trim()
     $titleMode = if ($title -eq "") { "device" } elseif ($title -eq "-") { "none" } else { "custom" }
 
     # --- disposition ---
@@ -511,9 +668,9 @@ function Do-Launcher {
     Say "   Vous pourrez tout changer ensuite directement sur la TV (appui long sur OK)." "   You can change everything later right on the TV (long-press OK)." "DarkGray"
 
     Say "Installation de Zen Home..." "Installing Zen Home..." "Cyan"
-    Say ">>> Regardez la TV : si Google Play Protect affiche un avertissement, choisissez « Détails » puis « Installer quand même »." ">>> Look at the TV: if Google Play Protect shows a warning, choose 'Details' then 'Install anyway'." "Cyan"
+    Say ">>> Toshiba : « Appli non sécurisée bloquée » (Play Protect) : OK annule. Si un avertissement apparaît, choisissez « Plus de détails » puis « Installer quand même »." ">>> Toshiba: Play Protect may block this app; pressing OK cancels. If a warning appears, choose 'More details' then 'Install anyway'." "Cyan"
     $r = (A install -r $ApkPath) -join " "
-    if ($r -notmatch "Success") { Err "Échec de l'installation : $r" "Install failed: $r"; Say "   Si la TV a affiché un avertissement Play Protect, relancez l'option 3 et choisissez « Détails » puis « Installer quand même »." "   If the TV showed a Play Protect warning, run option 3 again and choose 'Details' then 'Install anyway'." "DarkGray"; return }
+    if ($r -notmatch "Success") { Err "Échec de l'installation : $r" "Install failed: $r"; Say "   Si la TV a affiché un avertissement Play Protect, relancez l'option 3 et choisissez « Plus de détails » puis « Installer quand même »." "   If the TV showed a Play Protect warning, run option 3 again and choose 'More details' then 'Install anyway'." "DarkGray"; return }
     Ok "Installé" "Installed"
     Sh "settings put global zenhome_title_mode $titleMode" | Out-Null
     if ($titleMode -eq "custom") { Sh ("settings put global zenhome_title_b64 " + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($title))) | Out-Null }
@@ -523,6 +680,11 @@ function Do-Launcher {
     Sh ("settings put global zenhome_rev " + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) | Out-Null   # la TV applique cette config
     Sh "pm grant $ZenPkg android.permission.READ_EXTERNAL_STORAGE" | Out-Null
 
+    if (Test-Cosmos) {
+        Say "Fond noir : Zen Home mesuré à 35 Mo, contre 48 Mo avec photos (4 grandes tuiles). Remplace les photos actuelles." "Black background: Zen Home measured at 35 MB versus 48 MB with photos (4 large tiles). Replaces current photos." "Cyan"
+        if (YesNo "Appliquer le fond noir uni (recommandé) ?" "Apply the plain black background (recommended)?" $true) { Set-BlackBackground }
+    }
+
     $setOk = ((Sh "cmd package set-home-activity $ZenPkg/.Home") -join " ")
     Set-HomeRole $ZenPkg
     Sh "am force-stop $ZenPkg" | Out-Null
@@ -531,6 +693,10 @@ function Do-Launcher {
     $now = Get-Home
     $origPkg = if ($st.original_home) { $st.original_home -replace "/.*$", "" } else { $null }
     $hasOrig = $origPkg -and $origPkg -ne $ZenPkg
+    if (Test-Cosmos) {
+        try { Complete-CosmosHome $origPkg } finally { Cosmos-Reminders }
+        return
+    }
     Write-Host ""
     if ($now -like "$ZenPkg/*") {
         Ok "Zen Home est l'écran d'accueil." "Zen Home is the home screen."
@@ -560,8 +726,7 @@ function Do-Launcher {
 }
 
 # ---------------------------------------------------------------- 4. photos perso
-function Do-Photos {
-    if (YesNo "Fond noir uni (le plus léger en mémoire) ?" "Plain black background (lightest on memory)?" $false) {
+function Set-BlackBackground {
         $blackPng = Join-Path $Kit "ecran-accueil\fond-noir.png"
         if (-not (Test-Path $blackPng)) { Err "fond-noir.png introuvable dans ecran-accueil/" "fond-noir.png not found in ecran-accueil/"; return }
         Sh "rm -rf /sdcard/ZenHome" | Out-Null
@@ -571,8 +736,9 @@ function Do-Photos {
         Sh "am force-stop $ZenPkg" | Out-Null
         Sh "input keyevent KEYCODE_HOME" | Out-Null
         Ok "Fond noir appliqué." "Black background applied."
-        return
-    }
+}
+function Do-Photos {
+    if (YesNo "Fond noir uni (le plus léger en mémoire) ?" "Plain black background (lightest on memory)?" $false) { Set-BlackBackground; return }
     if (-not (Test-Path $PhotosDir)) { New-Item -ItemType Directory -Force $PhotosDir | Out-Null }
     $files = @(Get-ChildItem $PhotosDir -File | Where-Object { $_.Extension -match "^\.(jpe?g|png|webp)$" })
     Write-Host ""
@@ -606,11 +772,8 @@ function Do-Restore {
     Write-Host ""
     Say "Restauration : réactive tout ce que le kit a désactivé sur cette TV, remet l'écran d'accueil et les animations d'origine." "Restore: re-enables everything the kit disabled on this TV, puts back the original home screen and animations." "White"
     if (-not (YesNo "Continuer ?" "Continue?" $true)) { return }
-    foreach ($p in $st.disabled) {
-        $r = (Sh "pm enable $p") -join " "
-        if ($r -match "enabled") { Ok $p $p }
-        else { Write-Host ("  - " + $p + (T " : déjà actif ou introuvable, ignoré" " : already enabled or not found, skipped")) -ForegroundColor DarkGray }
-    }
+    Undo-ProfileBatch @($st.disabled)
+    $st = Get-State
     if ($st.anim) {
         foreach ($pair in @(@("window_animation_scale",$st.anim.window),@("transition_animation_scale",$st.anim.transition),@("animator_duration_scale",$st.anim.animator))) {
             if ($pair[1] -and $pair[1] -ne "null") { Sh "settings put global $($pair[0]) $($pair[1])" | Out-Null } else { Sh "settings delete global $($pair[0])" | Out-Null }
@@ -625,20 +788,22 @@ function Do-Restore {
         foreach ($k in "zenhome_title_b64","zenhome_title_mode","zenhome_layout","zenhome_dock","zenhome_rev","zenhome_interval") { Sh "settings delete global $k" | Out-Null }
         Sh "rm -rf /sdcard/ZenHome" | Out-Null
     }
-    $st.disabled = @(); $st.launcher_disabled = $null
+    if ($st.disabled -notcontains $st.launcher_disabled) { $st.launcher_disabled = $null }
     Save-State $st
     Sh "input keyevent KEYCODE_HOME" | Out-Null
     Start-Sleep 6
     Capture-TV "apres_restauration" | Out-Null
-    Ok "Restauration terminée. Redémarrez la TV pour finir proprement." "Restore done. Restart the TV to finish cleanly."
+    if ($st.disabled.Count -gt 0) { Warn "Restauration incomplète : paquets conservés dans l'état, réessayez l'option 6." "Restore incomplete: packages retained in state, retry option 6." }
+    else { Ok "Restauration terminée. Redémarrez la TV pour finir proprement." "Restore done. Restart the TV to finish cleanly." }
 }
 
 # ---------------------------------------------------------------- menu
 while ($true) {
     Clear-Host
     Write-Host "  ╔══════════════════════════════════════════════╗" -ForegroundColor DarkCyan
-    Write-Host ("  ║   " + (T "Kit TV Android - allègement + Zen Home   " "Android TV kit - slimming + Zen Home      ") + "  ║") -ForegroundColor DarkCyan
+    Write-Host ("  ║   " + (T "Toshiba / Vestel Cosmos + Zen Home      " "Toshiba / Vestel Cosmos + Zen Home      ") + "  ║") -ForegroundColor DarkCyan
     Write-Host "  ╚══════════════════════════════════════════════╝" -ForegroundColor DarkCyan
+    Show-Profile
     if (Test-Path $ConfFile) { $c = Get-Content $ConfFile -Raw | ConvertFrom-Json; Write-Host ("   TV : " + $c.label + "  (" + $c.target + ")") -ForegroundColor Gray }
     else { Say "   Aucune TV choisie" "   No TV selected" "DarkGray" }
     Write-Host ""

@@ -1,0 +1,68 @@
+# Toshiba / Vestel Cosmos Edition — Toshiba 43QA4163DG, Android TV 11
+# octobre 2026 — testé sur un appareil réel / tested on a real unit
+# Fingerprint: Vestel/Cosmos170/yeoksam:11/RTOC.251019.001/14296264:user/release-keys
+# Format paquet : package | description FR | English description | auto/ask/alone
+# auto : une confirmation par lot ; ask : répondre non pour désactiver.
+# alone : confirmation séparée et test immédiat, retour arrière de ce seul lot.
+# Les sections [apres zen ...] sont exécutées après Zen Home (option 3),
+# ou par l'option 2 si Zen Home est déjà l'accueil. [garder] est informatif.
+
+[lot 1] Télémétrie et services inutiles | Telemetry and useless services
+test: Télécommande, touche Input → HDMI, puis Netflix. | Remote, Input key → HDMI, then Netflix.
+com.vestel.vestelreporter | Rapports Vestel | Vestel reports | auto
+android.autoinstalls.config.vestel.cosmos | Installations automatiques partenaires | Partner auto-installs | auto
+com.google.android.feedback | Rapports Google | Google feedback reports | auto
+com.google.android.syncadapters.calendar | Synchronisation de l'agenda | Calendar sync | auto
+com.android.printspooler | Service d'impression | Print service | auto
+com.google.android.apps.nbu.smartconnect.tv | Smart Connect (compteur de données et VPN) | Smart Connect (data meter and VPN) | auto
+com.google.android.play.games | Google Play Jeux | Google Play Games | auto
+com.google.android.videos | Google Play Films | Google Play Movies | auto
+
+[lot 2] Fonctions inutilisées : vos choix | Unused features: your choices
+test: Télécommande, Input → HDMI, puis Chromecast depuis un téléphone. | Remote, Input → HDMI, then Chromecast from a phone.
+com.google.android.katniss | Assistant Google (Hey Google depuis téléphone ou Nest) | Google Assistant (Hey Google from phone or Nest) | ask
+com.google.android.youtube.tvmusic | YouTube Music | YouTube Music | ask
+com.mediatek.wwtv.mediaplayer | Lecteur de clé USB MediaTek | MediaTek USB player | ask
+com.mediatek.tv.freeviewplay | Guide Freeview Play britannique | UK Freeview Play guide | ask
+com.cltv.fast | Chaînes FAST avec publicité (ce n'est pas la TV en direct) | Ad-supported FAST channels (not live TV) | auto
+com.google.android.backdrop | Économiseur d'écran Google | Google ambient screensaver | ask
+
+[lot 2 seul] Démo magasin : test Input immédiat | Store demo: immediate Input test
+test: Appuyez maintenant sur Input et ouvrez une entrée HDMI ; sur certaines cartes MTC, ce paquet gère Input. | Press Input now and open an HDMI input; on some MTC boards this package handles Input.
+fusion.android.tv.demo | Démo magasin (peut gérer Input sur d'autres cartes) | Store demo (may handle Input on other boards) | alone
+
+# Après Zen Home : com.google.android.tvlauncher et com.google.android.tvrecommendations
+# sont traités exclusivement par l'option 3, jamais par l'option 2.
+[apres zen 3] Masquer les tuiles à risque | Hide risky tiles
+test: Accueil Zen Home, Toutes les applis, Entrées TV et touche Input → HDMI. | Zen Home, All apps, TV inputs tile and Input key → HDMI.
+com.vestel.tv.eib | Manuel électronique Vestel | Vestel electronic manual | ask
+com.vestel.tv.speedup | System Speed Up (nettoyeur inutile) | System Speed Up (unnecessary cleaner) | auto
+com.mstar.android.tv.disclaimercustomization | Avertissement de première configuration | First-setup disclaimer | auto
+mediatek.factorymenu.ui | Écrans du menu usine (pas le service com.mediatek.tv.factory) | Factory menu screens (not the com.mediatek.tv.factory service) | ask
+
+[apres zen 4] Synthèse vocale | Text-to-speech
+test: Navigation avec la télécommande, applis habituelles et fonctions vocales utilisées. | Remote navigation, usual apps and any speech features you use.
+com.google.android.tts | Synthèse vocale Google (accessibilité) | Google text-to-speech (accessibility) | ask
+
+[garder] Paquets conservés et raisons | Kept packages and reasons
+com.mediatek.wwtv.tvcenter | TV en direct, HDMI et touche Input : protégé | Live TV, HDMI and Input key: protected | keep
+com.google.android.apps.mediashell | Chromecast conservé ; optionnel en mode générique | Chromecast kept; optional in generic mode | keep
+com.google.android.youtube.tv | YouTube utilisé et touche dédiée | YouTube used and dedicated remote button | keep
+com.amazon.amazonvideo.livingroom | Prime Video utilisé et touche dédiée | Prime Video used and dedicated remote button | keep
+com.netflix.ninja | Netflix utilisé et touche dédiée | Netflix used and dedicated remote button | keep
+com.mediatek.wwtv.webview | Navigateur HbbTV non testé, laissé intact | Untested HbbTV browser, left alone | keep
+com.google.android.leanbacklauncher.partnercustomizer | Évite les plantages de tv.service et la perte de la touche Input | Prevents tv.service crash loops and loss of Input key | keep
+com.google.android.tungsten.setupwraith | Assistant système conservé sur Cosmos | System setup helper kept on Cosmos | keep
+com.vestel.tv.service | Service central Vestel | Core Vestel service | keep
+com.vestel.tv.servicepatch | Correctifs du service Vestel | Vestel service patches | keep
+com.vestel.tv.keycontroller | Gestion de la télécommande | Remote key handling | keep
+com.vestel.tv.backlight | Rétroéclairage | Backlight control | keep
+com.vestel.tv.rcupdater | Mise à jour de la télécommande | Remote updater | keep
+com.mediatek.tv.service | Service TV central et observateur Netflix | Core TV service and Netflix observer | keep
+com.mediatek.tvinput | Entrées TV | TV inputs | keep
+com.mediatek.tv.factory | Service usine en arrière-plan : ne jamais toucher | Background factory service: never touch | keep
+com.mediatek.tvinputservice.arbitratorservice | Arbitrage des entrées | Input arbitration | keep
+com.mediatek.network | Réseau MediaTek | MediaTek networking | keep
+com.android.vending | Play Store | Play Store | keep
+com.google.android.gms | Services Google Play | Google Play Services | keep
+com.google.android.inputmethod.latin | Clavier Gboard | Gboard keyboard | keep

@@ -1,314 +1,224 @@
-# Kit TV Android : rendez votre TV rapide et belle
+# Kit TV Toshiba (Vestel) Android TV : plus rapide, sans pubs
 
-**🇫🇷 Français** · [🇬🇧 English version](README-en.md)
+**TOSHIBA / VESTEL COSMOS EDITION** — Un accueil léger et un allègement réversible, testés sur une Toshiba 43QA4163DG.
 
-Votre TV Android rame, affiche des pubs partout, et le son se décale pendant les films ? Ce kit l'allège en quelques minutes depuis un PC Windows, un Mac ou un PC Linux. Il installe aussi **Zen Home**, un écran d'accueil minimaliste façon Apple TV.
+**Français** · [English](README-en.md)
 
-<table>
-  <tr>
-    <th align="center">Avant</th>
-    <th align="center">Après</th>
-  </tr>
-  <tr>
-    <td><img src="docs/avant.jpg" alt="TV TCL avant : accueil Google TV chargé de pubs et d'applis" width="400"></td>
-    <td><img src="docs/apres.jpg" alt="TV TCL après : écran d'accueil Zen Home avec photo de paysage et dock" width="400"></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>Accueil d'origine : pubs, applis promo, lenteurs</sub></td>
-    <td align="center"><sub>Zen Home : photo de paysage, l'heure et vos applis</sub></td>
-  </tr>
-</table>
-
-<sub>Photos réelles d'une TCL de 2019. Le titre affiché en haut à gauche est personnalisable.</sub>
 
 > [!WARNING]
-> **Projet personnel partagé tel quel, sans aucune garantie.** Je ne suis pas responsable des problèmes que son utilisation pourrait causer à votre TV, à vos appareils ou à vos données. Chaque TV est différente : lisez la section [Avant d'utiliser le kit sur votre TV](#avant-dutiliser-le-kit-sur-votre-tv).
+> **Projet personnel partagé tel quel, sans aucune garantie.** Je ne suis pas responsable des problèmes que son utilisation pourrait causer à votre TV, à vos appareils ou à vos données. Chaque TV est différente : vérifiez votre modèle et lisez le profil avant de l’utiliser.
 
----
+## Pour quelle TV ?
 
-## Sommaire
+Le profil a été **testé sur une unité réelle en octobre 2026** : **Toshiba 43QA4163DG**, QLED 4K de 2022, fabriquée par Vestel. Elle tourne sous **Android TV 11 (SDK 30), pas Google TV**, avec le correctif de sécurité du **2025-08-01**. Les essais matériels et mesures ci-dessous proviennent de cette unité ; les scripts de cette édition sont vérifiés hors TV par simulation.
 
-1. [En bref](#en-bref)
-2. [Ce que fait le kit](#ce-que-fait-le-kit)
-3. [Compatibilité](#compatibilité)
-4. [Avant d'utiliser le kit sur votre TV](#avant-dutiliser-le-kit-sur-votre-tv)
-5. [Préparer la TV (5 minutes)](#préparer-la-tv-5-minutes)
-6. [Utilisation](#utilisation)
-7. [Personnaliser Zen Home](#personnaliser-zen-home)
-8. [Sécurité et retour en arrière](#sécurité-et-retour-en-arrière)
-9. [Dépannage](#dépannage)
-10. [Contenu du dossier](#contenu-du-dossier)
-11. [Responsabilité](#responsabilité)
-12. [Crédits et licence](#crédits-et-licence)
+Vérifiez l’étiquette à l’arrière, puis **Paramètres → Préférences de l’appareil → À propos**. L’option **1** affiche aussi l’empreinte du firmware (fingerprint) :
 
----
+```text
+Vestel/Cosmos170/yeoksam:11/RTOC.251019.001/14296264:user/release-keys
+```
 
-## En bref
+| Identification observée | Valeur |
+|---|---|
+| Fabricant / marque Android | `Vestel` / `Vestel` |
+| Modèle / appareil / produit Android | `Cosmos` / `yeoksam` / `Cosmos170` |
+| Mémoire | 1,3 Go (`MemTotal 1368668 kB`), zram 512 Mo, `ro.config.low_ram=true` |
+| Processeur / ABI | MediaTek, 4 cœurs, `armeabi-v7a` (32 bits) |
+| Stockage `/data` | 4,2 Go, auparavant rempli à 85 % |
+| Interface | 1920 × 1080 à 60 Hz uniquement, malgré la dalle 4K |
+| Vidéo | HDR10, HLG, Dolby Vision ; décodage matériel H.264, HEVC, VP9, MPEG-2, VC-1 et Dolby Vision |
+| AV1 | Logiciel uniquement, trop lent sur cette TV |
 
-1. Activez le mode développeur et le débogage sur la TV ([voir comment](#préparer-la-tv-5-minutes)).
-2. Double-cliquez sur **`LANCER.bat`** (Windows) ou **`LANCER.command`** (macOS), ou lancez **`./LANCER.sh`** (Linux), puis tapez l'adresse IP de la TV.
-3. Acceptez « Autoriser le débogage » sur la TV.
-4. Faites dans l'ordre les options **1** (sauvegarde), **2** (allègement) et **3** (écran d'accueil).
-5. Si quelque chose ne vous plaît pas, l'option **6** remet tout comme avant.
+Les 50/55/65QA4163DG sont **probablement** proches : comparez leur fingerprint. Vestel distribue ce firmware sous plusieurs marques, dont Toshiba, JVC, Hitachi et Telefunken. L’empreinte est identique à celle de l’exemple espagnol `examples/toshiba-cosmos-android-tv` de [CleanYourTV](https://github.com/Gathin23/cleanyourtv/tree/main/examples/toshiba-cosmos-android-tv). Ce rapprochement ne vaut pas un test sur chaque variante.
 
-## Ce que fait le kit
+Le profil est proposé si le fabricant **ou** la marque vaut Vestel et si l’appareil est `yeoksam` **ou** le modèle `Cosmos`. Un firmware différent déclenche un avertissement : lisez [le profil](scripts/profils/toshiba-cosmos.txt) avant de continuer.
 
-| Option du menu | Ce qu'elle fait | Modifie la TV ? |
+Les autres Android TV restent prises en charge par les **listes génériques**, avec leurs listes et chemins propres à chaque marque. Cette édition est un fork MIT du [projet d’origine xMazaki/unbloat-android-tv](https://github.com/xMazaki/unbloat-android-tv). Les résultats Toshiba ne préjugent pas de ceux d’une autre TV. Fire TV conserve les limites du projet d’origine pour le remplacement de l’accueil.
+
+## Résultats mesurés
+
+Mesures au repos sur l’accueil, environ 8 à 13 minutes après redémarrage dans les mêmes conditions, sauf les relevés explicitement pris après 9 jours sans redémarrage. Valeurs arrondies, pas une promesse de gain identique.
+
+| Mesure | Avant | Après |
 |---|---|---|
-| **1. Diagnostic + sauvegarde** | Relève la version d'Android, la mémoire, le processeur et le Wi-Fi. Sauvegarde la liste des applis et des réglages, avec une capture de l'écran. | Non |
-| **2. Alléger** | Désactive les pubs, la télémétrie et les services inutiles connus (Google, TCL, Sony, Xiaomi…). Pour les fonctions que vous utilisez peut-être (Chromecast, Assistant…), le kit vous pose la question. | Oui, réversible |
-| **3. Zen Home** | Installe l'écran d'accueil minimaliste : votre titre, une vue à 4, 6 ou 8 applis, et vos applis préférées. Si vous le voulez, il désactive aussi l'accueil d'origine, souvent très gourmand. | Oui, réversible |
-| **4. Mes photos** | Remplace les photos fournies par les vôtres. | Oui, réversible |
-| **5. Capture d'écran** | Prend une capture de ce qui est affiché sur la TV. | Non |
-| **6. Tout restaurer** | Réactive tout ce que le kit a désactivé, remet l'écran d'accueil et les animations d'origine, et désinstalle Zen Home. | Retour à l'origine |
-| **7. Autre TV** | Change la TV ciblée. | Non |
+| RAM disponible | ~470 Mo | ~520 Mo |
+| Swap zram utilisé | ~230 Mo | ~164 Mo |
+| Mémoire de l’accueil | 127 Mo peu après démarrage ; 212 Mo + 30 Mo de swap après 9 jours | Zen Home : 48 Mo avec photos ; **35 Mo avec fond noir**, 4 grandes tuiles |
+| Mémoire réellement utilisée par les applis (`dumpsys meminfo`, « used pss ») | 870 Mo, après 9 jours | 587 Mo |
+| Stockage libre | 683 Mo | ~1 Go **après désinstallation manuelle d’applis inutilisées** |
 
-**Rien n'est jamais désinstallé**, sauf Zen Home si vous le demandez. Les applis sont seulement *désactivées*, et tout se réactive en un clic.
+Le kit désactive les paquets ; il ne les désinstalle pas. Le gain de stockage ne vient donc pas de la seule désactivation. Android garde volontairement environ 300 Mo d’applis récentes en cache pour les relancer immédiatement. La RAM « disponible » ne reflète pas tout le gain.
 
-**Exemple réel** sur une TCL de 2019 (Android 9, 2 Go de RAM) :
-
-| | Avant | Après |
-|---|---|---|
-| Processeur au repos | 61 % | 12 % |
-| RAM disponible | 451 Mo | 720 Mo |
-| Écran d'accueil | 187 Mo (Google TV) | 25 Mo (Zen Home) |
-| Services désactivés (pubs, télémétrie, inutiles) | 0 | 32 |
-
-Ces chiffres viennent d'une seule TV. Le gain sera différent sur la vôtre.
-
-## Compatibilité
-
-| Appareil | Allègement | Zen Home |
-|---|---|---|
-| TV **Android TV / Google TV** : TCL, Sony, Philips, Xiaomi, Hisense (modèles Android), Sharp, Toshiba… | ✅ | ✅ |
-| Boîtiers : Nvidia Shield, Chromecast avec Google TV, Xiaomi Mi Box, Google TV Streamer | ✅ | ✅ |
-| Projecteurs sous Android TV / Google TV : XGIMI… | ✅ | ✅ |
-| **Amazon Fire TV / Fire Stick** (Fire OS) | ✅ | ❌ Utilisez un outil dédié ([voir ci-dessous](#fire-tv--fire-stick--changer-laccueil)) |
-| Fire TV sous **Vega OS** (Fire TV Stick 4K Select et modèles sortis depuis fin 2025) | ❌ Pas Android | ❌ |
-| Samsung (Tizen), LG (webOS), Hisense VIDAA, Roku, Apple TV | ❌ Pas Android | ❌ |
-
-**Testé en conditions réelles :** une TCL BeyondTV (Android 9) et une Toshiba 43QA4163DG (Vestel Cosmos, Android TV 11). Testés aussi par des utilisateurs : une TCL BeyondTV2 (Android 9) et un projecteur XGIMI MoGo 3 Pro (Google TV, Android 11). Les autres appareils de ce tableau devraient fonctionner, car ils utilisent les mêmes commandes Android, mais ils n'ont pas tous été testés.
-
-### Fire TV / Fire Stick : changer l'accueil
-
-Amazon protège son écran d'accueil : sans root, impossible de le désactiver ou de le remplacer comme le fait le kit sur les autres TV. Utilisez le kit pour l'**allègement** (options 1, 2 et 6), puis l'un de ces outils dédiés pour l'accueil. Ils redirigent la touche Accueil vers le launcher de votre choix grâce à un service d'accessibilité, sans root, sur Fire OS 7 et 8 :
-
-- **[Projectivy Launcher](https://play.google.com/store/apps/details?id=com.spocky.projengmenu)** : un launcher complet, avec l'option « Remplacer le launcher actuel » dans ses réglages.
-- **[FireStick Fixer](https://github.com/Hornet34/firestick-fixer)** (libre) ou **[Home on Fire](https://xdaforums.com/t/app-firetv-noroot-home-on-fire-use-any-launcher-as-your-fire-tv-home-home-button-boot-fire-os-8-7.4791567/)** : envoient la touche Accueil vers le launcher de votre choix.
-- **[Launcher Manager](https://xdaforums.com/t/app-firetv-noroot-launcher-manager-change-launcher-without-root.4176349/)** : même principe, et permet aussi de reprogrammer les boutons d'applis de la télécommande.
-
-L'accueil Amazon reste installé et peut apparaître une fraction de seconde. Après une mise à jour de Fire OS, il faut parfois réactiver l'outil. Évitez les méthodes « system user » trouvées sur les forums : elles peuvent bloquer la Fire TV au démarrage.
-
-### Marques couvertes par les listes d'allègement
-
-Le kit contient des listes spécifiques pour chaque grande marque, en plus de la partie Google commune à toutes les TV Android :
-
-| Marque | Ce qui est désactivé d'office | Ce qui est demandé |
-|---|---|---|
-| **Toutes (Google)** | Rapports à Google, services publicitaires Android, recommandations de l'ancien accueil | Chromecast, Assistant, Mode Ambiant, recommandations, Play Films/Musique/Jeux |
-| **TCL** (et Thomson fabriqué par TCL) | Télémétrie, pubs au démarrage, messages promo, mode démo | TCL Channel, recopie d'écran, Media Center, Alexa, boutique TCL |
-| **Sony Bravia** | Samba TV (analyse de ce que vous regardez), Sony Select, barres de recommandations, mode démo, télémétrie | Recopie d'écran, AirPlay, Alexa, recherche vocale Sony, BRAVIA CORE |
-| **Philips** | Analytique TP Vision, rangée « Top Picks », galerie d'applis, Inscape | Alexa, DLNA, Play-Fi, Mimi |
-| **Xiaomi** | Télémétrie MIUI, rangées publicitaires, moteur de pub, Alphonso | Xiaomi TV+, Mi Cast, recopie d'écran, Mi Musique, Alexa |
-| **Hisense** (Android) | Mode démo, analyse de ce que vous regardez, télémétrie | Chaînes VIDAA, Alexa, RemoteNOW, Miracast |
-| **Sharp, Toshiba, Thomson, Philco** (Android) | Mode démo, Anoki, télémétrie Vestel, recommandations Skyworth | Chaînes gratuites, recopie d'écran |
-| **Nvidia Shield** | Télémétrie et diagnostics Nvidia | GeForce NOW, GameStream, superposition jeux |
-| **Amazon Fire TV** | Analyse de ce que vous regardez, identifiant pub, promos, métriques | Alexa, Amazon Photos/Music, jeux, Amazon Kids, Silk |
-| **XGIMI** (projecteurs) | Rapports de bug envoyés à XGIMI | Douban FM (radio chinoise) |
-
-### Notes Toshiba / Vestel (Android TV 11)
-
-Observations sur la Toshiba 43QA4163DG (Vestel Cosmos) :
-
-- Le débogage USB seul ouvre ADB sur le réseau, port 5555. Ce firmware n'a pas de bouton séparé de débogage réseau ou sans fil.
-- Ne désactivez jamais `com.mediatek.wwtv.tvcenter` (TV en direct et entrées HDMI), les services matériels `com.vestel.tv.*` et `com.mediatek.tv.*`, ni `com.google.android.leanbacklauncher.partnercustomizer`. Les paquets critiques identifiés sont désormais protégés par le kit ; sans le dernier, `com.mediatek.tv.service` peut planter en boucle sur les cartes Vestel/MTC et la touche Input cesse de fonctionner.
-- Les boutons YouTube et Prime Video de la télécommande sont gérés par le firmware Vestel sous Android : si ces applis sont désactivées, les boutons ne font rien, et aucun launcher ne peut les reprogrammer.
-- Cette TV n'a pas de microphone. L'Assistant Google (`katniss`) ne sert que pour « Hey Google » depuis un téléphone ou une enceinte Nest.
-- `fusion.android.tv.demo` a été désactivé sans problème sur cette TV (la touche Input fonctionne toujours), mais gère cette touche sur certaines cartes apparentées fabriquées par MTC : testez Input juste après l'option 2.
-- Play Protect sur Android 11 en français affiche « Appli non sécurisée bloquée » : choisissez « Plus de détails », puis « Installer quand même ». N'appuyez pas sur OK, qui annule.
-- L'accueil d'origine est `com.google.android.tvlauncher` ; la TV refuse Zen Home par défaut tant qu'il reste actif. L'option 3 gère sa désactivation.
-- Le Wi-Fi se coupe en veille et ADB se déconnecte : réveillez la TV avant chaque utilisation du kit.
-- Mesures sur cette TV, au repos sur l'accueil, 8 à 13 minutes après chaque redémarrage : RAM disponible environ 470 → 520 Mo ; swap compressé utilisé environ 230 → 164 Mo ; accueil 127 Mo (212 Mo après 9 jours sans redémarrage) → Zen Home 35 Mo avec fond noir (48 Mo avec les photos fournies). Mémoire réellement utilisée par les applis (`dumpsys meminfo`, « used pss ») : 870 Mo (avant, après 9 jours de fonctionnement) → 587 Mo. Le gain le plus visible : la TV est utilisable dès que l'accueil apparaît après l'allumage. Ces mesures sont propres à cette TV et les durées de fonctionnement diffèrent pour les relevés indiqués.
-- Astuce pour les TV de 1,3 Go : régler « Limite des processus en arrière-plan » sur 2 dans les options développeur aide. Ne désactivez pas ensuite tout le menu des options développeur : cela réinitialise les animations et cette limite.
-- `mediatek.factorymenu.ui` contient seulement les écrans du menu d'usine. Le service d'usine en fond est le paquet distinct `com.mediatek.tv.factory`, à ne jamais toucher. Ce firmware refuse de désactiver uniquement l'activité du menu (« Shell cannot change component state ») : le kit désactive donc tout le paquet d'interface si vous choisissez de le masquer.
-
-Ces listes ont été établies en octobre 2026 à partir de plusieurs sources communautaires (Universal Android Debloater, listes par modèle CleanYourTV, shield_optimizer, dumbtv, forums). Les paquets connus pour casser quelque chose (entrées HDMI, télécommande, mises à jour, réglages) ont été volontairement exclus.
-
-**Le kit ne propose que ce qui existe sur votre TV.** Une Sony ne verra que les lignes Google et Sony, par exemple. Si un paquet est absent ou si la TV refuse de le désactiver (certains sont verrouillés, surtout sur Fire TV), il est simplement ignoré et le kit continue.
-
-**Il vous faut :** un ordinateur sous **Windows 10 ou 11**, **macOS** ou **Linux**, connecté au **même réseau** que la TV. Sur Linux, `curl` (ou `wget`) et `unzip` doivent être installés. ADB, l'outil officiel de Google pour parler à Android, est téléchargé automatiquement au premier lancement (environ 7 Mo).
-
-## Avant d'utiliser le kit sur votre TV
-
-Chaque fabricant installe ses propres applis, avec des noms différents selon les marques, les modèles et les versions d'Android. Le kit a été conçu pour être prudent, mais il ne peut pas connaître toutes les TV du marché.
-
-**Vous devrez peut-être adapter le kit à votre TV.** Par exemple :
-
-- ajouter ou retirer des lignes dans `scripts/listes/pubs_telemetrie.txt` et `scripts/listes/optionnel.txt` ;
-- ajouter l'appli « Entrées TV » de votre marque dans le code de Zen Home, si elle n'est pas reconnue ;
-- ajuster une commande si votre version d'Android se comporte différemment.
-
-**Faites relire le kit avant de l'utiliser.** Si vous n'êtes pas à l'aise avec le code, ouvrez le dossier du kit dans un assistant de code comme **[Claude Code](https://claude.com/claude-code)** et demandez-lui par exemple :
-
-> « Relis ce kit avant que je l'utilise sur ma TV [marque et modèle, version d'Android]. Vérifie que les listes de paquets et les commandes sont adaptées à ma TV, signale ce qui pourrait poser problème et propose les modifications nécessaires. »
-
-Vous pouvez lui donner le contenu du fichier `sauvegardes/<numéro-de-série>/sauvegarde_…/paquets_tous.txt`, créé par l'option 1 (qui ne modifie rien). Il connaîtra ainsi la liste exacte des applis de votre TV.
-
-**Dans tous les cas, lancez d'abord l'option 1.** Lisez ce que l'option 2 propose de désactiver avant de confirmer, et répondez « non » à tout ce que vous ne comprenez pas.
+Le changement le plus sensible : la TV est utilisable dès l’apparition de l’accueil après l’allumage. Elle ne se dégrade plus au fil des jours dans les essais de cette unité.
 
 ## Préparer la TV (5 minutes)
 
-### 1. Activer le mode développeur
+1. Allumez la TV et mettez-la sur le même réseau local que l’ordinateur.
+2. Ouvrez **Paramètres → Préférences de l’appareil → À propos**. Appuyez **7 fois sur OK sur « Build »**.
+3. Revenez dans **Options pour les développeurs → Débogage USB** et activez-le.
+4. Sur cette Toshiba, ce seul réglage ouvre ADB réseau sur le **port 5555**. Il n’y a **aucun bouton séparé de débogage réseau ou sans fil**, ni de jumelage à faire.
+5. Retrouvez l’adresse réseau dans **Paramètres → Réseau**, ou **À propos → État**. Vous la saisirez dans le kit. Validez l’autorisation de débogage affichée sur la TV.
 
-1. Ouvrez **Paramètres → Système → À propos** (ou **Préférences de l'appareil → À propos**).
-2. Descendez jusqu'à **Build** (ou **Version de l'OS Android TV**) et **appuyez 7 fois** dessus avec le bouton OK de la télécommande.
-3. Le message « Vous êtes maintenant développeur » s'affiche.
-
-### 2. Activer le débogage
-
-1. Ouvrez **Paramètres → Système → Options pour les développeurs**.
-2. Activez **Débogage USB**. S'ils existent, activez aussi **Débogage ADB réseau** ou **Débogage sans fil**.
-
-### 3. Noter l'adresse IP de la TV
-
-Dans **Paramètres → Réseau et Internet → (votre Wi-Fi)**, ou **À propos → État**, notez l'adresse du type `192.168.1.50`.
-
-> [!TIP]
-> Dans votre box, réservez cette adresse IP pour la TV (« bail DHCP statique »). Elle ne changera plus.
+Réveillez la TV avant chaque connexion : le Wi-Fi s’arrête en veille et ADB se coupe. Sur une autre marque, suivez les options de débogage proposées par son firmware ; le kit conserve la connexion avec jumelage quand elle existe.
 
 ## Utilisation
 
-1. Double-cliquez sur **`LANCER.bat`** (Windows) ou **`LANCER.command`** (macOS). Sur Linux, ouvrez un terminal dans le dossier du kit et tapez `./LANCER.sh`.
-2. Choisissez une option du menu. La première fois, le kit demande l'adresse IP de la TV.
-3. **Regardez la TV** : la fenêtre « Autoriser le débogage USB ? » s'affiche. Cochez **« Toujours autoriser depuis cet ordinateur »**, puis **OK**.
-4. Le kit affiche la marque et le modèle trouvés. Vérifiez que c'est bien votre TV avant de confirmer.
-5. **Option 3 :** pendant l'installation de Zen Home, Google Play Protect peut afficher un avertissement sur la TV (appli installée hors du Play Store). Choisissez **« Détails »** puis **« Installer quand même »**.
+Décompressez tout le kit dans un dossier. Gardez `scripts/`, `ecran-accueil/` et les lanceurs ensemble. Au premier lancement, le kit télécharge les outils ADB officiels de Google s’ils ne sont pas déjà installés.
 
-**Ordre conseillé : 1, puis 2, puis 3.** Le kit fait de toute façon une sauvegarde automatique avant la première modification.
-
-Le kit parle français si le système (Windows, macOS ou Linux) est en français, sinon anglais.
-
-Les versions Windows (`scripts/kit.ps1`) et macOS/Linux (`scripts/kit.sh`) font exactement la même chose et partagent les mêmes listes et le même dossier `sauvegardes/` : vous pouvez commencer sur un ordinateur et restaurer depuis un autre.
-
-## Personnaliser Zen Home
-
-| Quoi | Comment |
+| Ordinateur | Lancer |
 |---|---|
-| **Titre** (« Salon », « Chambre de Léa »…) | Option 3 du menu. Tapez votre titre, laissez vide pour afficher le nom de la TV (celui des paramètres Android), ou tapez `-` pour ne rien afficher. |
-| **Disposition** | Option 3 : **4 applis** (grandes tuiles), **6 applis** sur une ligne, ou **8 applis** sur deux lignes. |
-| **Applis du dock** | Option 3 : le kit liste les applis de streaming trouvées, choisissez les numéros dans l'ordre voulu. Sans choix, Zen Home prend automatiquement les premières parmi Netflix, YouTube, Prime Video, Disney+, myCANAL, Max, Apple TV… |
-| **Fond noir** | Option 4 : répondez oui à « Fond noir uni » pour le fond le plus léger en mémoire. Pour revenir aux photos fournies, videz `mes_photos`, relancez l’option 4, refusez le fond noir et confirmez le retour aux photos fournies. |
-| **Vos photos** | Copiez vos `.jpg` (format paysage, idéalement 1920×1080) dans le dossier **`mes_photos`**, puis lancez l'option 4. Pour revenir aux photos fournies, videz le dossier et relancez l'option 4. |
-| **Vitesse de défilement** | Option 4 : nombre de secondes entre deux photos (60 par défaut). |
-| **Ce qui est désactivé** | Modifiez `scripts/listes/pubs_telemetrie.txt` (désactivé après une seule confirmation) et `scripts/listes/optionnel.txt` (le kit pose la question pour chaque ligne). Une ligne = `nom.du.paquet | description FR | English description`. Pour regrouper plusieurs paquets d'une même fonction sous une seule question : `paquet1,paquet2 | ... | ...`. |
+| Windows | Double-cliquer sur `LANCER.bat` |
+| macOS | Ouvrir `LANCER.command` (clic droit → Ouvrir si nécessaire) |
+| Linux | `./LANCER.sh` ; si nécessaire `bash LANCER.sh` |
 
-Avec la télécommande, dans Zen Home :
+Suivez **1 → 2 → 3 → 4 (facultatif)** :
 
-- **Flèches et OK** pour ouvrir une appli.
-- **Toutes** pour voir toutes les applis installées.
-- **Entrées TV** pour les chaînes et les ports HDMI, si la marque est reconnue.
+1. **Diagnostic + sauvegarde.** Vérifiez le modèle, le fingerprint et le message « Profil testé détecté : Toshiba / Vestel Cosmos (43QA4163DG) ».
+2. **Alléger → Suivre le profil testé (recommandé).** Le kit ne propose que les paquets présents et actifs. Un accord couvre les éléments d’office d’un lot. Pour « Utilisez-vous… ? », répondez **non** pour désactiver. Les choix personnels des essais ne sont pas imposés. Testez après chaque lot. **n** à « Tout fonctionne ? » réactive seulement ce que ce lot vient de désactiver, puis arrête le profil. Les lots précédents restent appliqués. La démo magasin est traitée seule avec un test Input immédiat.
+3. **Installer Zen Home.** Le dock propose **4 grandes tuiles** par défaut. Le fond noir est proposé par défaut sur Cosmos (35 Mo contre 48 Mo avec photos). Vérifiez Zen Home et les entrées avant d’accepter de couper l’ancien accueil. Sur ce firmware, l’ancien accueil refuse un autre accueil par défaut tant qu’il est actif : le kit lance d’abord Zen Home pour l’essai, puis désactive l’ancien accueil et vérifie le résultat. `com.google.android.tvlauncher` et `com.google.android.tvrecommendations` ne passent jamais par le profil de l’option 2. Le lot accueil a son propre retour arrière. Les lots « Masquer les tuiles à risque », puis « Synthèse vocale » sont proposés ensuite, dans l’ordre testé. Si Zen Home est déjà l’accueil, l’option 2 peut aussi proposer ces lots.
+4. **Photos (facultatif).** Placez vos images paysage dans `mes_photos/` (1920 × 1080 conseillé), puis utilisez l’option 4. Elle permet aussi le fond noir et le retour aux photos fournies. Le fond noir remplace les photos personnalisées présentes sur la TV.
 
-### Modifier l'écran d'accueil directement sur la TV
+**Play Protect :** pour Zen Home (`targetSdk 24`), la TV affiche **« Appli non sécurisée bloquée »**. Choisissez **« Plus de détails » → « Installer quand même »**. Appuyer simplement sur **OK annule l’installation**. Relancez l’option 3 si elle a été annulée.
 
-Pas besoin du PC pour changer le dock. Deux façons d'ouvrir le menu d'une appli :
+Pour modifier Zen Home ensuite : appui long sur OK ou bouton « Modifier l’accueil ». La tuile **« Entrées TV »** reconnaît `com.mediatek.wwtv.tvcenter` ; la touche **Input** fonctionne aussi avec Zen Home sur l’unité testée.
 
-- **Avec n'importe quelle télécommande :** depuis le dock, appuyez sur la flèche **Haut** pour atteindre **« ✎ Modifier l'accueil »**, puis **OK**. Un simple **OK** sur une appli ouvre alors son menu ; **Retour** termine.
-- **Raccourci :** sur une appli du dock, faites un **appui long sur OK** (ou appuyez sur la touche **Menu**, si votre télécommande en a une).
+## Ce que le profil désactive
 
-Le menu propose :
+Les lignes et les tests bilingues sont dans [scripts/profils/toshiba-cosmos.txt](scripts/profils/toshiba-cosmos.txt). Rien n’est désinstallé. Chaque lot exige son test avant la suite. Les lots après Zen Home sont différés tant que l’accueil n’est pas installé et vérifié.
 
-| Action | Ce qu'elle fait |
+### Télémétrie et services inutiles
+
+| Paquet | Fonction | Pourquoi | Mode |
+|---|---|---|---|
+| `com.vestel.vestelreporter` | Rapports Vestel | Rapports non nécessaires au fonctionnement. | D’office, après confirmation du lot |
+| `android.autoinstalls.config.vestel.cosmos` | Installations automatiques partenaires | Évite les installations partenaires. | D’office, après confirmation du lot |
+| `com.google.android.feedback` | Rapports Google | Rapports facultatifs. | D’office, après confirmation du lot |
+| `com.google.android.syncadapters.calendar` | Synchronisation de l'agenda | Pas d’agenda utilisé sur cette TV. | D’office, après confirmation du lot |
+| `com.android.printspooler` | Service d'impression | Pas d’impression depuis la TV. | D’office, après confirmation du lot |
+| `com.google.android.apps.nbu.smartconnect.tv` | Smart Connect (compteur de données et VPN) | Service non utilisé. | D’office, après confirmation du lot |
+| `com.google.android.play.games` | Google Play Jeux | Jeux Google non utilisés. | D’office, après confirmation du lot |
+| `com.google.android.videos` | Google Play Films | Films Google non utilisés. | D’office, après confirmation du lot |
+
+### Fonctions inutilisées : vos choix
+
+| Paquet | Fonction | Pourquoi | Mode |
+|---|---|---|---|
+| `com.google.android.katniss` | Assistant Google (Hey Google depuis téléphone ou Nest) | Télécommande sans micro ; gardez-le si vous utilisez Hey Google depuis un téléphone/Nest. | Question : non pour désactiver |
+| `com.google.android.youtube.tvmusic` | YouTube Music | Choix selon votre usage musical. | Question : non pour désactiver |
+| `com.mediatek.wwtv.mediaplayer` | Lecteur de clé USB MediaTek | Gardez-le pour lire une clé USB avec ce lecteur. | Question : non pour désactiver |
+| `com.mediatek.tv.freeviewplay` | Guide Freeview Play britannique | Guide britannique non utilisé ici. | Question : non pour désactiver |
+| `com.cltv.fast` | Chaînes FAST avec publicité (ce n'est pas la TV en direct) | Chaînes publicitaires, distinctes de la TV en direct. | D’office, après confirmation du lot |
+| `com.google.android.backdrop` | Économiseur d'écran Google | Fond ambiant Google non utilisé. | Question : non pour désactiver |
+
+### Démo magasin : test Input immédiat
+
+| Paquet | Fonction | Pourquoi | Mode |
+|---|---|---|---|
+| `fusion.android.tv.demo` | Démo magasin (peut gérer Input sur d'autres cartes) | Démo inutile ici ; risque Input sur certaines cartes MTC. | Séparément + test immédiat |
+
+### Lot 3 — Accueil Zen Home
+
+Le lot accueil, réservé à **l’option 3** :
+
+| Paquet | Fonction | Pourquoi | Mode |
+|---|---|---|---|
+| `com.google.android.tvlauncher` | Accueil Android TV classique | Publicités et mémoire qui augmente avec le temps | Accord après essai de Zen Home |
+| `com.google.android.tvrecommendations` | Recommandations de l’ancien accueil | Inutiles avec Zen Home | Avec le lot accueil, après vérification |
+
+### Masquer les tuiles à risque
+
+| Paquet | Fonction | Pourquoi | Mode |
+|---|---|---|---|
+| `com.vestel.tv.eib` | Manuel électronique Vestel | Masque le manuel si vous ne le consultez pas. | Question : non pour désactiver |
+| `com.vestel.tv.speedup` | System Speed Up (nettoyeur inutile) | Évite le nettoyeur et sa tuile. | D’office, après confirmation du lot |
+| `com.mstar.android.tv.disclaimercustomization` | Avertissement de première configuration | Avertissement de configuration déjà passée. | D’office, après confirmation du lot |
+| `mediatek.factorymenu.ui` | Écrans du menu usine (pas le service com.mediatek.tv.factory) | Évite une manipulation usine accidentelle ; garde le service usine. | Question : non pour désactiver |
+
+### Synthèse vocale
+
+| Paquet | Fonction | Pourquoi | Mode |
+|---|---|---|---|
+| `com.google.android.tts` | Synthèse vocale Google (accessibilité) | Seulement si aucune fonction d’accessibilité n’en a besoin. | Question : non pour désactiver |
+
+Déjà désactivés avant les essais : `com.google.android.marvin.talkback`, `com.google.android.tv.remote.service` et les paquets `uk.co.freeview.*` suivants : `mdsclient`, `amc_catchup`, `onnow`, `uktv`, `fvpconfigauth`, `bbc_sounds`, `tifbridge`, `explore`, `bbc`, `ch5`, `itv`, `stv`, `amc_horror`, `ch4_vod`. Le profil les laisse tels quels ; il ne les réactive pas automatiquement, y compris lors de l’annulation d’un lot.
+
+## Ce qu’on garde et pourquoi
+
+| Paquet conservé | Pourquoi |
 |---|---|
-| **Déplacer** | L'appli s'entoure de bleu : déplacez-la avec les flèches, puis **OK** pour valider. |
-| **Remplacer par une autre appli** | Ouvre la liste de vos applis : celle que vous choisissez prend sa place. |
-| **Retirer du dock** | Enlève l'appli du dock (elle reste installée). |
-| **Ajouter une appli** | Quand il reste de la place. La case **+** du dock fait la même chose. |
-| **Disposition** | Passe en vue 4, 6 ou 8 applis. |
-| **Modifier le titre** | Votre texte, ou vide pour le nom de la TV, ou « Aucun titre ». |
+| `com.mediatek.wwtv.tvcenter` | TV en direct, HDMI et touche Input : protégé |
+| `com.google.android.apps.mediashell` | Chromecast conservé ; optionnel en mode générique |
+| `com.google.android.youtube.tv` | YouTube utilisé et touche dédiée |
+| `com.amazon.amazonvideo.livingroom` | Prime Video utilisé et touche dédiée |
+| `com.netflix.ninja` | Netflix utilisé et touche dédiée |
+| `com.mediatek.wwtv.webview` | Navigateur HbbTV non testé, laissé intact |
+| `com.google.android.leanbacklauncher.partnercustomizer` | Évite les plantages de tv.service et la perte de la touche Input |
+| `com.google.android.tungsten.setupwraith` | Assistant système conservé sur Cosmos |
+| `com.vestel.tv.service` | Service central Vestel |
+| `com.vestel.tv.servicepatch` | Correctifs du service Vestel |
+| `com.vestel.tv.keycontroller` | Gestion de la télécommande |
+| `com.vestel.tv.backlight` | Rétroéclairage |
+| `com.vestel.tv.rcupdater` | Mise à jour de la télécommande |
+| `com.mediatek.tv.service` | Service TV central et observateur Netflix |
+| `com.mediatek.tvinput` | Entrées TV |
+| `com.mediatek.tv.factory` | Service usine en arrière-plan : ne jamais toucher |
+| `com.mediatek.tvinputservice.arbitratorservice` | Arbitrage des entrées |
+| `com.mediatek.network` | Réseau MediaTek |
+| `com.android.vending` | Play Store |
+| `com.google.android.gms` | Services Google Play |
+| `com.google.android.inputmethod.latin` | Clavier Gboard |
 
-Dans **Toutes**, un appui long sur une appli permet aussi de l'**ajouter au dock**.
+Les paquets de fonctionnement TV de cette table sont protégés dans les scripts, ainsi que les protections existantes (réglages, Play Store, services Google, clavier, etc.). Chromecast n’est pas protégé : on peut le retirer volontairement dans la liste facultative générique. Sur les autres Google TV, le traitement existant de l’accueil de secours `setupwraith` reste possible dans l’option 3 ; **il est toujours conservé sur Cosmos**.
 
-Ces réglages sont enregistrés sur la TV. Si vous relancez plus tard l'option 3 du kit, ce sont les choix faits dans le kit qui s'appliquent.
+Deux tuiles de « Toutes les applis » restent visibles et sont sans danger : **« com.mstar.netflixobserver »**, une activité de `com.mediatek.tv.service` (probablement la touche Netflix), et **« Service API Vestel »**, `com.vestel.tv.service/.PasswordDialogActivity`. Ne désactivez pas les services pour les cacher. Le shell de ce firmware ne peut pas désactiver un composant isolé d’une appli système (« Shell cannot change component state »).
 
-## Sécurité et retour en arrière
+## Pièges connus sur cette TV
 
-- **Verrou d'identité.** Le kit enregistre le numéro de série de votre TV. Avant chaque action, il vérifie que l'appareil à cette adresse est bien le même. Une autre TV, une box ou un Fire Stick qui récupère cette IP ne sera jamais modifié.
-- **Applis protégées.** Le Play Store, les services Google, les réglages, le clavier, WebView… ne sont jamais désactivés, même s'ils sont ajoutés à une liste.
-- **L'écran d'accueil actuel n'est jamais coupé par l'option 2.** Seule l'option 3 peut le désactiver, une fois Zen Home installé.
-- **Sauvegardes et captures.** Tout est rangé dans `sauvegardes/<numéro-de-série-de-la-TV>/`, avec un journal de chaque session.
-- **Retour en arrière :** option 6. Si le PC n'est plus disponible, sur la TV : **Paramètres → Applis → Voir toutes les applis → Afficher les applis système →** choisissez l'appli → **Activer**.
-- **Les mises à jour système** de la TV restent actives. Après une grosse mise à jour, certaines applis peuvent être réactivées : relancez simplement l'option 2. C'est fréquent sur Fire TV.
-- **Philips :** attendez une dizaine de secondes après l'allègement avant d'éteindre la TV, le temps qu'elle enregistre les changements. Le kit attend déjà un peu, mais ne débranchez pas la TV juste après.
-
-En dernier recours, une réinitialisation d'usine remet toujours la TV à neuf. Elle efface aussi vos comptes et vos applis.
-
-## Dépannage
-
-| Problème | Solution |
+| Point | À retenir |
 |---|---|
-| « Connexion impossible » | Vérifiez que la TV est allumée (pas en veille), sur le même réseau que le PC, et que le **Débogage USB** est activé. Vérifiez aussi l'adresse IP. |
-| Pas de fenêtre « Autoriser le débogage » | Désactivez puis réactivez le Débogage USB, puis relancez le kit. Sur certaines TV, il faut aussi activer **Débogage ADB réseau**. |
-| TV en Android 11 ou plus récent, avec un écran « Débogage sans fil » | Choisissez « Associer avec un code » sur la TV. Quand le kit le propose, répondez **oui** et tapez l'IP:port et le code affichés. |
-| L'appui long sur OK ne fait rien | Utilisez le bouton **« ✎ Modifier l'accueil »** au-dessus du dock (flèche Haut depuis le dock) : il marche avec toutes les télécommandes. Zen Home reconnaît aussi les télécommandes qui envoient l'appui long comme une rafale d'appuis courts (Sony, par exemple). |
-| « Échec de l'installation » de Zen Home | La TV a sans doute affiché un avertissement Google Play Protect resté sans réponse. Relancez l'option 3 et, sur la TV, choisissez **« Détails »** puis **« Installer quand même »**. |
-| Zen Home ne s'affiche pas avec le bouton Accueil | Appuyez sur Accueil : si un choix s'affiche, prenez **Zen Home** puis **Toujours**. Sinon, relancez l'option 3 et acceptez de désactiver l'accueil d'origine. |
-| Les boutons Netflix, YouTube ou Prime Video de la télécommande ne marchent plus | Sur Google TV, c'est l'accueil d'origine qui gère ces boutons. Sur les **TCL**, l'option 3 les rebranche automatiquement grâce à un petit service d'accessibilité de Zen Home, qui n'intercepte que ces trois touches (l'option 6 le retire). Sur les autres marques, lancez l'option 6, puis refaites l'option 3 en répondant **non** quand le kit propose de désactiver l'accueil d'origine. |
-| La touche Source de la télécommande ne marche plus | Sur certaines TV (surtout Google TV), c'est l'accueil d'origine qui gère cette touche. Lancez l'option 6 pour le réactiver, puis refaites l'option 3 en répondant **non** quand le kit propose de le désactiver. |
-| Le kit dit que le Wi-Fi appartient à l'écran de secours Google | Le réseau a été enregistré pendant la première configuration de la TV : désactiver cet écran le supprimerait et couperait la connexion. Sur la TV, **Paramètres → Réseau**, faites **« Oublier »** sur votre Wi-Fi **et sur les autres réseaux enregistrés** (se déconnecter puis se reconnecter ne suffit pas), reconnectez-vous en retapant le mot de passe, puis relancez l'option 3. Autre solution : branchez la TV en **Ethernet**, le kit pourra alors le désactiver sans risque (le Wi-Fi sera à reconfigurer). |
-| Logo Google TV en boucle après l'option 3 | Un écran de secours de Google a pris la place de l'accueil. Appuyez sur Accueil et choisissez **Zen Home** puis **Toujours**. Sinon, lancez l'option 6 depuis le PC, redémarrez la TV, puis refaites l'option 3 avec la dernière version du kit. |
-| L'ancien accueil revient (Google TV) | Sur Google TV, l'accueil d'origine peut se réactiver tout seul quelques minutes après l'option 3, ou après une mise à jour. Zen Home reste en général l'accueil (l'option 1 signale ce qui a été réactivé). S'il reprend la main, relancez l'option 3. |
-| La tuile « Entrées TV » est absente | La marque n'est pas reconnue : utilisez le bouton Source ou Input de la télécommande, ou ajoutez votre marque dans le code (voir [Avant d'utiliser le kit](#avant-dutiliser-le-kit-sur-votre-tv)). |
-| « ignoré (non modifiable sur cette TV) » s'affiche | C'est normal : la TV protège ce paquet ou ne l'a pas. Rien n'a été modifié pour lui. |
-| Une fonction de la TV ne marche plus | Relancez l'option 6 pour tout restaurer, puis refaites l'option 2 en répondant « oui » à cette fonction. |
-| Ça rame encore pendant les films | Passez la TV en Wi-Fi **5 GHz** ou en câble Ethernet. Désactivez le lissage de mouvement (MEMC, Motion) dans les réglages d'image. Si ça ne suffit pas, la TV manque de puissance : un boîtier externe sera plus fluide. |
-| Windows bloque `LANCER.bat` | Clic droit sur le fichier → **Propriétés** → cochez **Débloquer**. Ou « Informations complémentaires » → **Exécuter quand même**. |
-| macOS refuse d'ouvrir `LANCER.command` | Clic droit (ou Ctrl+clic) sur le fichier → **Ouvrir** → **Ouvrir**. Si « permission refusée » s'affiche, ouvrez le Terminal dans le dossier du kit et tapez `bash LANCER.sh`. |
-| Linux : « Permission non accordée » sur `LANCER.sh` | Tapez `chmod +x LANCER.sh` une fois, ou lancez `bash LANCER.sh`. |
+| Télécommande IR, sans microphone | Assistant n’est utile ici que pour Hey Google depuis un téléphone/Nest selon l’usage. |
+| Touches YouTube et Prime Video | Gérées par le firmware Vestel sous Android. Si l’appli est désactivée, sa touche ne fait rien. Aucun remappage possible. |
+| Touche Input | Tester après chaque lot, surtout `fusion.android.tv.demo`. Ne jamais couper `tvcenter`, `partnercustomizer` ou les services TV. `com.cltv.fast` n’est pas la TV en direct. |
+| Play Protect | « Plus de détails » → « Installer quand même ». OK seul annule. |
+| Captures d’écran | `screencap` écrit du texte parasite avant le PNG (« Init wrapper sys mutex successful… », « open mma dev failed »). Le kit conserve la capture dans un fichier sur la TV, puis le transfert ; pas de `exec-out screencap -p`. |
+| Veille | Le Wi-Fi s’éteint ; réveillez la TV avant de reconnecter ADB. |
+| Options pour les développeurs | Couper seulement Débogage USB à la fin. Couper le commutateur général réinitialise animations et limite des processus. |
+| Animations | Elles étaient déjà à 0,0. Le kit ne les remonte jamais ; il ne réduit que les valeurs supérieures à 0,5. |
+| Freeview | Des paquets peuvent déjà être désactivés sur les modèles hors Royaume-Uni. Laissez-les dans cet état si tout fonctionne. |
+| Navigateur HbbTV | `com.mediatek.wwtv.webview` n’a pas été testé désactivé et reste intact. |
 
-## Contenu du dossier
+## Après le kit
 
-```
-Kit-TV-Android/
-├── LANCER.bat              ← Windows : double-cliquez ici
-├── LANCER.command          ← macOS : double-cliquez ici
-├── LANCER.sh               ← Linux : ./LANCER.sh
-├── README.md / README-en.md
-├── CREDITS.md              ← auteurs et licences des photos
-├── LICENSE                 ← licence MIT
-├── docs/                 ← images du README
-├── scripts/
-│   ├── kit.ps1             ← le programme (PowerShell, Windows)
-│   ├── kit.sh              ← le même programme (bash, macOS/Linux)
-│   └── listes/             ← ce qui est désactivé (modifiable)
-├── ecran-accueil/
-│   ├── ZenHome.apk         ← l'écran d'accueil prêt à installer
-│   └── source/             ← code source Java + script de compilation
-├── mes_photos/             ← vos photos pour Zen Home (option 4)
-├── outils/                 ← ADB, téléchargé automatiquement
-└── sauvegardes/            ← créé automatiquement : une sauvegarde par TV
-```
+Facultatif, à régler **à la main** : **Options pour les développeurs → Limite des processus en arrière-plan → 2**. C’est le compromis utilisé sur 1,3 Go. Avec **0**, chaque appli redémarre à froid et perd sa position. Le kit ne force pas ce réglage.
 
-> [!NOTE]
-> Si vous partagez le kit, ne partagez pas `sauvegardes/`, `outils/` ni `config_tv.json` : ils contiennent des informations sur votre TV.
+À la fin, désactivez seulement **Débogage USB**. Gardez les Options pour les développeurs actives pour conserver vos réglages. Les mises à jour système restent actives ; certaines peuvent réactiver des applis. L’option 1 signale les réactivations depuis le passage du kit.
+
+À envisager selon vos usages : SmartTube, LocalSend, Aerial Views.
+
+## Retour en arrière
+
+L’**option 6** réactive les paquets enregistrés par le kit, remet l’accueil et les animations d’origine et propose de désinstaller Zen Home. Elle ne réactive pas les paquets déjà désactivés avant le kit. L’annulation d’un lot ne touche que ce lot ; si une réactivation échoue, le paquet reste dans l’état pour réessayer avec l’option 6.
+
+Conservez **`sauvegardes/<identifiant local>/etat_kit.json`** et les sauvegardes : ce fichier contient les paquets modifiés et les réglages d’origine. Le kit vérifie l’identité de la TV avant chaque action. Ces fichiers et `config_tv.json` sont privés et exclus du suivi Git : **ne les partagez pas**. Le kit enregistre ces données localement à l’usage ; aucun relevé personnel de la TV testée n’est fourni dans cette édition.
+
+Sans ordinateur : **Paramètres → Applis → Voir toutes les applis → Afficher les applis système → choisir l’appli → Activer**. En dernier recours, la **réinitialisation d’usine réactive tout**, et efface aussi les comptes, applis et réglages.
 
 ## Responsabilité
 
-Ce kit est un projet personnel, partagé gratuitement **tel quel, sans aucune garantie**. En l'utilisant, vous acceptez que :
+Ce kit est un projet personnel, partagé gratuitement **tel quel, sans aucune garantie**. En l’utilisant, vous acceptez que :
 
 - **je ne suis pas responsable** des problèmes, pannes, pertes de données, dysfonctionnements ou annulations de garantie que son utilisation pourrait causer, directement ou indirectement ;
-- vous l'utilisez **à vos propres risques**, sur un appareil qui vous appartient ;
-- il vous revient de vérifier que le kit convient à votre TV avant de l'utiliser, et de l'adapter si nécessaire (voir [Avant d'utiliser le kit sur votre TV](#avant-dutiliser-le-kit-sur-votre-tv)).
+- vous l’utilisez **à vos propres risques**, sur un appareil qui vous appartient ;
+- il vous revient de vérifier que le kit convient à votre TV avant de l’utiliser, et de l’adapter si nécessaire (voir « Pour quelle TV ? » et le profil).
 
-Le kit n'est ni affilié, ni soutenu par Google, TCL, Sony, Philips, Xiaomi, Amazon ou un autre fabricant. Les noms de marques cités appartiennent à leurs propriétaires.
+Le kit n’est ni affilié, ni soutenu par Toshiba, Vestel, Google, TCL, Sony, Philips, Xiaomi, Amazon ou un autre fabricant. Les noms de marques cités appartiennent à leurs propriétaires.
 
 ## Crédits et licence
 
-- **Photos :** 19 « Featured pictures » de Wikimedia Commons, sous licence CC BY-SA. Les auteurs et les liens sont dans [CREDITS.md](CREDITS.md).
-- **Listes d'allègement :** établies à partir de [Universal Android Debloater NG](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation), [CleanYourTV](https://github.com/Gathin23/cleanyourtv), [shield_optimizer](https://github.com/bryanroscoe/shield_optimizer), [dumbtv](https://github.com/humblemuzzu/dumbtv) et de guides communautaires. Merci à leurs auteurs.
+- **Projet d’origine :** [xMazaki/unbloat-android-tv](https://github.com/xMazaki/unbloat-android-tv), licence MIT. Cette édition conserve les autres marques et ne modifie ni l’APK Zen Home ni ses sources Java.
+- **Référence Vestel :** [CleanYourTV, examples/toshiba-cosmos-android-tv](https://github.com/Gathin23/cleanyourtv/tree/main/examples/toshiba-cosmos-android-tv), même fingerprint sur une unité du marché espagnol.
+- **Listes génériques :** [Universal Android Debloater NG](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation), [CleanYourTV](https://github.com/Gathin23/cleanyourtv), [shield_optimizer](https://github.com/bryanroscoe/shield_optimizer), [dumbtv](https://github.com/humblemuzzu/dumbtv) et guides communautaires.
+- **Photos :** 19 « Featured pictures » de Wikimedia Commons, CC BY-SA. Attributions conservées dans [CREDITS.md](CREDITS.md).
 - **Police :** Poppins, SIL Open Font License.
 - **ADB :** Android SDK Platform-Tools de Google, téléchargé depuis le site officiel au premier lancement.
-- **Code du kit et de Zen Home :** licence MIT, voir [LICENSE](LICENSE). Vous pouvez l'utiliser, le modifier et le partager librement.
-
----
-
-**🇫🇷 Français** · [🇬🇧 English version](README-en.md)
+- **Code du kit et de Zen Home :** MIT, voir [LICENSE](LICENSE).

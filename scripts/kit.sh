@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =====================================================================
-#  Kit TV Android - allègement réversible + écran d'accueil Zen Home
-#  Android TV slimming kit - reversible debloat + Zen Home launcher
+#  Kit TV Toshiba / Vestel Cosmos - allègement réversible + écran d'accueil Zen Home
+#  Toshiba / Vestel Cosmos kit - reversible debloat + Zen Home launcher
 #  macOS / Linux (bash 3.2+)  -  lancé par LANCER.command ou LANCER.sh
 #  Portage de kit.ps1 : mêmes listes, mêmes fichiers de sauvegarde.
 # =====================================================================
@@ -13,6 +13,7 @@ APK_PATH="$KIT/ecran-accueil/ZenHome.apk"
 PHOTOS_DIR="$KIT/mes_photos"
 CONF_FILE="$KIT/config_tv.json"
 ZEN_PKG="tv.zenhome"
+COSMOS_FINGERPRINT="Vestel/Cosmos170/yeoksam:11/RTOC.251019.001/14296264:user/release-keys"
 GTV_FALLBACK="com.google.android.tungsten.setupwraith"   # accueil de secours de Google TV
 mkdir -p "$TOOLS" "$SAVES"
 
@@ -103,9 +104,31 @@ Get_TvIdentity() {
     INFO_Id="$(printf '%s' "$id" | sed 's/[^A-Za-z0-9_-]/_/g')"
     INFO_Brand="$(Prop ro.product.brand)"; INFO_Model="$(Prop ro.product.model)"
     INFO_Manufacturer="$(Prop ro.product.manufacturer)"
+    INFO_Device="$(Prop ro.product.device)"; INFO_Fingerprint="$(Prop ro.build.fingerprint)"
     INFO_Android="$(Prop ro.build.version.release)"; INFO_Sdk="$(Prop ro.build.version.sdk)"
     INFO_Patch="$(Prop ro.build.version.security_patch)"; INFO_Build="$(Prop ro.build.display.id)"
     INFO_Name="$(trim "$(Sh "settings get global device_name" | tr -d '\n')")"
+}
+
+Test_Cosmos() {
+    local maker brand model device
+    maker="$(printf '%s' "$INFO_Manufacturer" | tr '[:upper:]' '[:lower:]')"
+    brand="$(printf '%s' "$INFO_Brand" | tr '[:upper:]' '[:lower:]')"
+    model="$(printf '%s' "$INFO_Model" | tr '[:upper:]' '[:lower:]')"
+    device="$(printf '%s' "$INFO_Device" | tr '[:upper:]' '[:lower:]')"
+    { [ "$maker" = vestel ] || [ "$brand" = vestel ]; } && { [ "$device" = yeoksam ] || [ "$model" = cosmos ]; }
+}
+Show_Profile() {
+    Test_Cosmos || return 0
+    Say "Profil testé détecté : Toshiba / Vestel Cosmos (43QA4163DG)" "Tested profile detected: Toshiba / Vestel Cosmos (43QA4163DG)" Cyan
+    if [ "$INFO_Fingerprint" != "$COSMOS_FINGERPRINT" ]; then
+        Warn "Firmware différent de l'exemplaire testé : lisez scripts/profils/toshiba-cosmos.txt avant de continuer." "Firmware differs from the tested unit: read scripts/profils/toshiba-cosmos.txt before continuing."
+    fi
+}
+Cosmos_Reminders() {
+    Test_Cosmos || return 0
+    Say "À la main : limite des processus en arrière-plan = 2 (facultatif ; 0 recharge chaque appli)." "By hand: background process limit = 2 (optional; 0 cold-starts every app)." Cyan
+    Say "À la fin, coupez seulement « Débogage USB », pas tout « Options pour les développeurs » : cela réinitialise animations et limite des processus." "At the end, turn off only USB debugging, not Developer options: the master switch resets animations and the process limit." Yellow
 }
 
 Connect_Target() {
@@ -125,7 +148,7 @@ Connect_Target() {
                 refused=$((refused + 1))
                 if [ $refused -ge 3 ]; then
                     Err "La TV répond mais refuse la connexion : son débogage réseau n'est pas actif." "The TV answers but refuses the connection: its network debugging is not enabled."
-                    Say "   Dans les options pour les développeurs, activez « Débogage ADB réseau » (ou « ADB over network »). Sur Android 11 et plus, utilisez « Débogage sans fil » et le jumelage par code." "   In developer options, enable 'Network ADB debugging' (or 'ADB over network'). On Android 11 and later, use 'Wireless debugging' and pairing with a code." DarkGray
+                    Say "   Toshiba Cosmos : activez seulement « Débogage USB » (port 5555), puis réveillez la TV. Autres TV : selon le modèle, Débogage ADB réseau ou Débogage sans fil avec jumelage." "   Toshiba Cosmos: enable only USB debugging (port 5555), then wake the TV. Other TVs: depending on model, Network ADB or Wireless debugging with pairing." DarkGray
                     return 1
                 fi ;;
             *"timed out"*|*10060*|*nreachable*|*10065*|*"No route"*)
@@ -149,7 +172,7 @@ Choose_TV() {
     echo
     Say "Trouvez l'adresse IP de la TV : Paramètres > Réseau (ou À propos > État)." "Find the TV's IP address: Settings > Network (or About > Status)." Cyan
     Say "Le débogage ADB doit être activé (voir README)." "ADB debugging must be enabled (see README)." DarkGray
-    ip="$(trim "$(Ask "Adresse IP de la TV (ex. 192.168.1.50)" "TV IP address (e.g. 192.168.1.50)")")"
+    ip="$(trim "$(Ask "Adresse IP de la TV" "TV IP address")")"
     [ -z "$ip" ] && return 1
     if ! Connect_Target "$ip"; then
         Err "Connexion impossible." "Could not connect."
@@ -166,6 +189,8 @@ Choose_TV() {
     Say "Appareil trouvé :" "Device found:" White
     printf '   %s %s  (%s)  - Android %s, patch %s\n' "$INFO_Brand" "$INFO_Model" "$INFO_Name" "$INFO_Android" "$INFO_Patch"
     printf '   ID : %s\n' "$INFO_Id"
+    printf '   Fingerprint : %s\n' "$INFO_Fingerprint"
+    Show_Profile
     if ! YesNo "Est-ce bien la TV que vous voulez modifier ?" "Is this the TV you want to modify?" 1; then
         "$ADB" disconnect "$T_" >/dev/null 2>&1; T_=""; return 1
     fi
@@ -193,6 +218,8 @@ Ensure_TV() {
     fi
     ID="$INFO_Id"
     Ok "TV vérifiée : $c_label" "TV verified: $c_label"
+    printf '   Fingerprint : %s\n' "$INFO_Fingerprint"
+    Show_Profile
     return 0
 }
 
@@ -351,24 +378,33 @@ com.google.android.gms com.google.android.gsf com.android.providers.settings com
 com.google.android.webview com.android.webview com.android.bluetooth com.android.phone com.android.shell
 com.android.packageinstaller com.google.android.packageinstaller com.android.inputdevices com.android.externalstorage
 com.android.providers.media com.android.providers.downloads com.google.android.inputmethod.latin
-com.mediatek.wwtv.tvcenter com.google.android.leanbacklauncher.partnercustomizer
+com.mediatek.wwtv.tvcenter com.mediatek.wwtv.webview com.google.android.leanbacklauncher.partnercustomizer
 com.vestel.tv.service com.vestel.tv.servicepatch
 com.vestel.tv.keycontroller com.vestel.tv.backlight
 com.vestel.tv.rcupdater com.mediatek.tv.service
-com.mediatek.tvinput com.mediatek.tv.factory $ZEN_PKG"
+com.mediatek.tvinput com.mediatek.tv.factory com.mediatek.tvinputservice.arbitratorservice
+com.mediatek.network com.mediatek.tv.network com.google.android.tungsten.setupwraith $ZEN_PKG"
 PROTECTED="$(printf '%s' "$PROTECTED" | tr ' ' '\n')"
 
+Test_Protected() {
+    # Preserve existing Google TV fallback handling outside the Cosmos profile.
+    if [ "$1" = "$GTV_FALLBACK" ] && [ "${2:-slim}" = launcher ] && ! Test_Cosmos; then return 1; fi
+    in_list "$1" "$PROTECTED"
+}
 Disable_Packages() {
     local why="$1" homePkg skipped=0 p r; shift
+    LAST_DISABLED=""
     Get_State
     homePkg="$(Get_Home)"; homePkg="${homePkg%%/*}"
     for p in "$@"; do
-        if in_list "$p" "$PROTECTED"; then Warn "$p protégé, ignoré" "$p is protected, skipped"; continue; fi
+        if Test_Protected "$p" "$why"; then Warn "$p protégé, ignoré" "$p is protected, skipped"; continue; fi
         if [ "$p" = "$homePkg" ] && [ "$why" != "launcher" ]; then Warn "$p est l'écran d'accueil actuel : ignoré (voir menu 3)" "$p is the current home screen: skipped (see menu 3)"; continue; fi
         r="$(Sh "pm disable-user --user 0 $p" | tr '\n' ' ')"
         case "$r" in
-            *disabled*) Ok "$p" "$p"; in_list "$p" "$ST_DISABLED" || ST_DISABLED="$ST_DISABLED${ST_DISABLED:+
-}$p" ;;
+            *"new state: disabled"*) Ok "$p" "$p"; in_list "$p" "$ST_DISABLED" || ST_DISABLED="$ST_DISABLED${ST_DISABLED:+
+}$p"
+                LAST_DISABLED="$LAST_DISABLED${LAST_DISABLED:+
+}$p"; Save_State ;;
             *)  # la TV refuse (paquet systeme verrouille, absent, etc.) : on ignore et on continue
                 printf '%s  - %s%s%s\n' "$C_DarkGray" "$p" "$(T " : ignoré (non modifiable sur cette TV)" " : skipped (cannot be changed on this TV)")" "$C_0"
                 skipped=$((skipped + 1)) ;;
@@ -385,15 +421,136 @@ Filter_List() {
     F_PKGS=(); F_FR=(); F_EN=()
     for i in "${!L_PKGS[@]}"; do
         keep=""
-        for p in ${L_PKGS[$i]}; do in_list "$p" "$ENABLED" && [ "$p" != "$HOME_PKG" ] && keep="$keep${keep:+ }$p"; done
+        for p in ${L_PKGS[$i]}; do in_list "$p" "$ENABLED" && [ "$p" != "$HOME_PKG" ] && ! Test_Protected "$p" && keep="$keep${keep:+ }$p"; done
         [ -n "$keep" ] && { F_PKGS[${#F_PKGS[@]}]="$keep"; F_FR[${#F_FR[@]}]="${L_FR[$i]}"; F_EN[${#F_EN[@]}]="${L_EN[$i]}"; }
     done
+}
+
+Profile_Trim() {
+    local value="$1"
+    value="${value#"${value%%[![:space:]]*}"}"
+    printf '%s' "${value%"${value##*[![:space:]]}"}"
+}
+Read_Profile() {
+    [ -r "$SCRIPTS/profils/toshiba-cosmos.txt" ] || { Err "Profil introuvable" "Profile not found"; return 1; }
+    local l tag rest fr en pk mode extra separators b=-1 n=0 i count alone
+    B_FR=(); B_EN=(); B_PHASE=(); B_TEST_FR=(); B_TEST_EN=()
+    P_BATCH=(); P_PKG=(); P_FR=(); P_EN=(); P_MODE=()
+    while IFS= read -r l || [ -n "$l" ]; do
+        l="${l#$BOM}"; l="$(Profile_Trim "$l")"
+        separators="${l//[^|]/}"
+        case "$l" in
+            ""|\#*) continue ;;
+            \[garder\]*) break ;;
+            \[*\]*)
+                tag="${l%%]*}"; tag="${tag#\[}"; rest="${l#*]}"
+                [ "${#separators}" = 1 ] || { Err "Titre de profil invalide" "Invalid profile heading"; return 1; }
+                IFS='|' read -r fr en <<< "$rest"
+                b=$((b + 1)); B_FR[$b]="$(Profile_Trim "$fr")"; B_EN[$b]="$(Profile_Trim "$en")"
+                B_PHASE[$b]=slim; case "$tag" in "apres zen"*) B_PHASE[$b]=zen ;; esac
+                B_TEST_FR[$b]=""; B_TEST_EN[$b]="" ;;
+            test:*)
+                [ "$b" -ge 0 ] && [ "${#separators}" = 1 ] || { Err "Test de profil invalide" "Invalid profile test"; return 1; }
+                IFS='|' read -r fr en <<< "${l#test:}"
+                B_TEST_FR[$b]="$(Profile_Trim "$fr")"; B_TEST_EN[$b]="$(Profile_Trim "$en")" ;;
+            *)
+                [ "$b" -ge 0 ] && [ "${#separators}" = 3 ] || { Err "Ligne de profil invalide" "Invalid profile entry"; return 1; }
+                IFS='|' read -r pk fr en mode extra <<< "$l"
+                pk="$(Profile_Trim "$pk")"; mode="$(Profile_Trim "$mode")"
+                case "$pk" in ""|*[!a-zA-Z0-9_.]*) return 1 ;; esac
+                case "$mode" in auto|ask|alone) ;; *) return 1 ;; esac
+                P_BATCH[$n]="$b"; P_PKG[$n]="$pk"; P_FR[$n]="$(Profile_Trim "$fr")"; P_EN[$n]="$(Profile_Trim "$en")"; P_MODE[$n]="$mode"; n=$((n + 1)) ;;
+        esac
+    done < "$SCRIPTS/profils/toshiba-cosmos.txt"
+    for b in "${!B_FR[@]}"; do
+        count=0; alone=0
+        for i in "${!P_PKG[@]}"; do
+            [ "${P_BATCH[$i]}" = "$b" ] || continue
+            count=$((count + 1)); [ "${P_MODE[$i]}" = alone ] && alone=1
+        done
+        if [ -z "${B_TEST_FR[$b]}" ] || [ -z "${B_TEST_EN[$b]}" ] || [ "$count" = 0 ] || { [ "$alone" = 1 ] && [ "$count" != 1 ]; }; then
+            Err "Lot de profil incomplet (alone exige un lot séparé)" "Incomplete profile batch (alone requires a separate batch)"; return 1
+        fi
+    done
+    return 0
+}
+Undo_ProfileBatch() {
+    local p r
+    Get_State
+    for p in "$@"; do
+        r="$(Sh "pm enable $p" | tr '\n' ' ')"
+        case "$r" in
+            *"new state: enabled"*) Ok "$p réactivé" "$p re-enabled"
+                ST_DISABLED="$(printf '%s\n' "$ST_DISABLED" | grep -vxF -- "$p")"; Save_State ;;
+            *) Warn "$p : réactivation refusée ; conservé dans l'état pour l'option 6." "$p: re-enable failed; retained in state for option 6." ;;
+        esac
+    done
+}
+Run_Profile() {
+    local phase="$1" b i p enabled homePkg changed autoAsked autoYes disable eligible=()
+    # Validate everything before the first change; never source profile text as code.
+    Read_Profile || return 1
+    for b in "${!B_FR[@]}"; do
+        [ "${B_PHASE[$b]}" = "$phase" ] || continue
+        enabled="$(Get_Packages -e)"; homePkg="$(Get_Home)"; homePkg="${homePkg%%/*}"; eligible=()
+        for i in "${!P_PKG[@]}"; do
+            [ "${P_BATCH[$i]}" = "$b" ] || continue
+            p="${P_PKG[$i]}"
+            in_list "$p" "$enabled" && [ "$p" != "$homePkg" ] && ! Test_Protected "$p" || continue
+            case "$p" in com.google.android.tvlauncher|com.google.android.tvrecommendations) continue ;; esac
+            eligible[${#eligible[@]}]="$i"
+        done
+        [ ${#eligible[@]} -gt 0 ] || continue
+        Say "${B_FR[$b]}" "${B_EN[$b]}" White
+        for i in "${eligible[@]}"; do printf '   %s | %s [%s]\n' "${P_PKG[$i]}" "$(T "${P_FR[$i]}" "${P_EN[$i]}")" "${P_MODE[$i]}"; done
+        changed=""; autoAsked=0; autoYes=0
+        for i in "${eligible[@]}"; do
+            p="${P_PKG[$i]}"; in_list "$p" "$(Get_Packages -e)" || continue
+            disable=0
+            case "${P_MODE[$i]}" in
+                auto)
+                    if [ "$autoAsked" = 0 ]; then
+                        YesNo "Désactiver les éléments d'office de ce lot ?" "Disable this batch's automatic items?" 1 && autoYes=1
+                        autoAsked=1
+                    fi
+                    disable="$autoYes" ;;
+                ask) YesNo "Utilisez-vous : ${P_FR[$i]} ?" "Do you use: ${P_EN[$i]}?" 1 || disable=1 ;;
+                alone) YesNo "Désactiver séparément : ${P_FR[$i]} ? Test Input juste après." "Disable separately: ${P_EN[$i]}? Test Input immediately afterwards." 0 && disable=1 ;;
+            esac
+            if [ "$disable" = 1 ]; then
+                Disable_Packages profile "$p"
+                [ -n "$LAST_DISABLED" ] && changed="$changed${changed:+
+}$LAST_DISABLED"
+            fi
+        done
+        if [ -n "$changed" ]; then
+            Say "${B_TEST_FR[$b]}" "${B_TEST_EN[$b]}" Cyan
+            if ! YesNo "Tout fonctionne ? (o = continuer / n = annuler ce lot)" "Everything works? (y = continue / n = undo this batch)" 0; then
+                Undo_ProfileBatch $changed
+                Warn "Profil arrêté après annulation du lot." "Profile stopped after undoing the batch."
+                return 1
+            fi
+        fi
+    done
+    return 0
 }
 
 # ---------------------------------------------------------------- 2. allègement
 Do_Slim() {
     local i lbl toOff="" safeAll="" b_dispo b_cpu k
     Ensure_Backup
+    if Test_Cosmos; then
+        Show_Profile
+        Say "1. Suivre le profil testé (recommandé)" "1. Follow the tested profile (recommended)" White
+        Say "2. Listes génériques" "2. Generic lists" White
+        if [ "$(trim "$(Ask "Votre choix (Entrée = 1)" "Your choice (Enter = 1)")")" != 2 ]; then
+            if Run_Profile slim; then
+                case "$(Get_Home)" in "$ZEN_PKG"/*) Run_Profile zen ;; *) Say "Les lots après Zen Home seront proposés par l'option 3." "The after-Zen-Home batches will be offered by option 3." Cyan ;; esac
+            fi
+            Cosmos_Reminders
+            return
+        fi
+    fi
     ENABLED="$(Get_Packages -e)"
     HOME_PKG="$(Get_Home)"; HOME_PKG="${HOME_PKG%%/*}"
     Read_List "pubs_telemetrie.txt"; Filter_List
@@ -450,6 +607,7 @@ Do_Slim() {
     printf '%s   RAM %s : %s Mo → %s Mo%s\n' "$C_White" "$(T "disponible" "available")" "$b_dispo" "$PERF_DISPO" "$C_0"
     printf '%s   CPU : %s %% → %s %%  %s%s\n' "$C_White" "$b_cpu" "$PERF_CPU" "$(T "(instantané, varie d'une mesure à l'autre)" "(snapshot, varies between readings)")" "$C_0"
     Say "Astuce : le plus gros gain vient souvent du remplacement de l'écran d'accueil (menu 3)." "Tip: the biggest gain often comes from replacing the home screen (menu 3)." DarkGray
+    Cosmos_Reminders
 }
 
 # ---------------------------------------------------------------- 3. écran d'accueil
@@ -520,7 +678,7 @@ Disable_OrigHome() {
     local orig="$1" toOff q wraithKept extra picked
     toOff="$orig"; wraithKept=0
     # Google TV : sans son accueil, l'écran de secours setupwraith prend la main (logo Google TV en boucle)
-    if in_list "$GTV_FALLBACK" "$(Get_Packages -e)"; then
+    if ! Test_Cosmos && in_list "$GTV_FALLBACK" "$(Get_Packages -e)"; then
         # mais si le Wi-Fi lui appartient, Android supprime ce réseau en le désactivant : la TV perdrait sa connexion (et ADB)
         if Test_WraithWifi && Test_OnEthernet; then
             Warn "Un réseau Wi-Fi enregistré appartient à l'écran de secours Google (setupwraith). La TV est branchée en Ethernet : le kit peut quand même le désactiver, mais ce réseau Wi-Fi sera supprimé (à reconfigurer ensuite si vous en avez besoin)." "A saved Wi-Fi network belongs to the Google fallback screen (setupwraith). The TV is on Ethernet: the kit can still disable it, but that Wi-Fi network will be deleted (set it up again later if you need it)."
@@ -574,6 +732,31 @@ EOF
     return 1
 }
 
+Complete_CosmosHome() {
+    local orig="$1" before p changed=""
+    before="$(Get_Packages -e)"
+    Sh "am start -n $ZEN_PKG/.Home" >/dev/null
+    YesNo "Vérifiez Zen Home, Entrées TV et Input → HDMI. Tout fonctionne avant de couper l'ancien accueil ?" "Check Zen Home, TV inputs and Input → HDMI. Does everything work before disabling the old home?" 0 || return 0
+    if [ -n "$orig" ] && [ "$orig" != "$ZEN_PKG" ] && in_list "$orig" "$before"; then
+        YesNo "Désactiver l'ancien accueil et ses recommandations (réversible) ?" "Disable the old home and its recommendations (reversible)?" 1 || return 0
+        Disable_OrigHome "$orig" || return 0
+    fi
+    case "$(Get_Home)" in "$ZEN_PKG"/*) ;; *) Warn "Zen Home doit être l'accueil avant de continuer." "Zen Home must be the default home before continuing."; return 0 ;; esac
+    if in_list com.google.android.tvrecommendations "$(Get_Packages -e)"; then Disable_Packages launcher com.google.android.tvrecommendations; fi
+    Get_State
+    for p in "$orig" com.google.android.tvrecommendations; do
+        [ -n "$p" ] && in_list "$p" "$before" && in_list "$p" "$ST_DISABLED" && changed="$changed${changed:+ }$p"
+    done
+    if [ -n "$changed" ] && ! YesNo "Testez Accueil, Entrées TV, Input → HDMI et Netflix. Tout fonctionne ? (o = continuer / n = annuler ce lot)" "Test Home, TV inputs, Input → HDMI and Netflix. Everything works? (y = continue / n = undo this batch)" 0; then
+        Undo_ProfileBatch $changed
+        Get_State; ST_LAUNCHER_DISABLED=""; Save_State
+        Sh "input keyevent KEYCODE_HOME" >/dev/null
+        return 0
+    fi
+    Run_Profile zen
+    Capture_TV zen_home
+}
+
 Do_Launcher() {
     local curHome title titleMode devName lc layout enabled i n k sel dockCsv="auto" found=() fnames=() pk=() r origPkg nowHome hasOrig
     case "$INFO_Brand $INFO_Manufacturer" in *Amazon*)
@@ -592,7 +775,7 @@ Do_Launcher() {
     { [ -z "$devName" ] || [ "$devName" = "null" ]; } && devName="$INFO_Model"
     Say "Titre affiché en haut à gauche de l'écran d'accueil :" "Title shown at the top left of the home screen:" White
     Say "   Entrée = nom de la TV (« $devName »)   ·   tapez - pour ne rien afficher" "   Enter = the TV's name ('$devName')   ·   type - to show nothing" DarkGray
-    title="$(trim "$(Ask "Titre (ex. « Salon », « Chambre de Léa »)" "Title (e.g. 'Living room', 'Emma's room')")")"
+    title="$(trim "$(Ask "Titre (ex. « Accueil »)" "Title (e.g. 'Home')")")"
     if [ -z "$title" ]; then titleMode="device"; elif [ "$title" = "-" ]; then titleMode="none"; else titleMode="custom"; fi
 
     # --- disposition ---
@@ -628,9 +811,9 @@ Do_Launcher() {
     Say "   Vous pourrez tout changer ensuite directement sur la TV (appui long sur OK)." "   You can change everything later right on the TV (long-press OK)." DarkGray
 
     Say "Installation de Zen Home..." "Installing Zen Home..." Cyan
-    Say ">>> Regardez la TV : si Google Play Protect affiche un avertissement, choisissez « Détails » puis « Installer quand même »." ">>> Look at the TV: if Google Play Protect shows a warning, choose 'Details' then 'Install anyway'." Cyan
+    Say ">>> Toshiba : « Appli non sécurisée bloquée » (Play Protect) : OK annule. Si un avertissement apparaît, choisissez « Plus de détails » puis « Installer quand même »." ">>> Toshiba: Play Protect may block this app; pressing OK cancels. If a warning appears, choose 'More details' then 'Install anyway'." Cyan
     r="$(A install -r "$APK_PATH" | tr '\n' ' ')"
-    case "$r" in *Success*) ;; *) Err "Échec de l'installation : $r" "Install failed: $r"; Say "   Si la TV a affiché un avertissement Play Protect, relancez l'option 3 et choisissez « Détails » puis « Installer quand même »." "   If the TV showed a Play Protect warning, run option 3 again and choose 'Details' then 'Install anyway'." DarkGray; return ;; esac
+    case "$r" in *Success*) ;; *) Err "Échec de l'installation : $r" "Install failed: $r"; Say "   Si la TV a affiché un avertissement Play Protect, relancez l'option 3 et choisissez « Plus de détails » puis « Installer quand même »." "   If the TV showed a Play Protect warning, run option 3 again and choose 'More details' then 'Install anyway'." DarkGray; return ;; esac
     Ok "Installé" "Installed"
     Sh "settings put global zenhome_title_mode $titleMode" >/dev/null
     if [ "$titleMode" = "custom" ]; then Sh "settings put global zenhome_title_b64 $(printf '%s' "$title" | base64 | tr -d '\n')" >/dev/null
@@ -640,6 +823,11 @@ Do_Launcher() {
     Sh "settings put global zenhome_rev $(date +%s)" >/dev/null   # la TV applique cette config
     Sh "pm grant $ZEN_PKG android.permission.READ_EXTERNAL_STORAGE" >/dev/null
 
+    if Test_Cosmos; then
+        Say "Fond noir : Zen Home mesuré à 35 Mo, contre 48 Mo avec photos (4 grandes tuiles). Remplace les photos actuelles." "Black background: Zen Home measured at 35 MB versus 48 MB with photos (4 large tiles). Replaces current photos." Cyan
+        if YesNo "Appliquer le fond noir uni (recommandé) ?" "Apply the plain black background (recommended)?" 1; then Set_BlackBackground; fi
+    fi
+
     Sh "cmd package set-home-activity $ZEN_PKG/.Home" >/dev/null
     Set_HomeRole "$ZEN_PKG"
     Sh "am force-stop $ZEN_PKG" >/dev/null
@@ -648,6 +836,11 @@ Do_Launcher() {
     nowHome="$(Get_Home)"
     origPkg="${ST_ORIGINAL_HOME%%/*}"
     hasOrig=0; [ -n "$origPkg" ] && [ "$origPkg" != "$ZEN_PKG" ] && hasOrig=1
+    if Test_Cosmos; then
+        Complete_CosmosHome "$origPkg"
+        Cosmos_Reminders
+        return
+    fi
     echo
     case "$nowHome" in
         "$ZEN_PKG"/*)
@@ -678,8 +871,7 @@ Do_Launcher() {
 }
 
 # ---------------------------------------------------------------- 4. photos perso
-Do_Photos() {
-    if YesNo "Fond noir uni (le plus léger en mémoire) ?" "Plain black background (lightest on memory)?" 0; then
+Set_BlackBackground() {
         local blackPng="$KIT/ecran-accueil/fond-noir.png"
         if [ ! -f "$blackPng" ]; then Err "fond-noir.png introuvable dans ecran-accueil/" "fond-noir.png not found in ecran-accueil/"; return; fi
         Sh "rm -rf /sdcard/ZenHome" >/dev/null
@@ -689,8 +881,9 @@ Do_Photos() {
         Sh "am force-stop $ZEN_PKG" >/dev/null
         Sh "input keyevent KEYCODE_HOME" >/dev/null
         Ok "Fond noir appliqué." "Black background applied."
-        return
-    fi
+}
+Do_Photos() {
+    if YesNo "Fond noir uni (le plus léger en mémoire) ?" "Plain black background (lightest on memory)?" 0; then Set_BlackBackground; return; fi
     local files=() f iv
     mkdir -p "$PHOTOS_DIR"
     for f in "$PHOTOS_DIR"/*; do
@@ -729,13 +922,8 @@ Do_Restore() {
     echo
     Say "Restauration : réactive tout ce que le kit a désactivé sur cette TV, remet l'écran d'accueil et les animations d'origine." "Restore: re-enables everything the kit disabled on this TV, puts back the original home screen and animations." White
     YesNo "Continuer ?" "Continue?" 1 || return
-    for p in $ST_DISABLED; do
-        r="$(Sh "pm enable $p" | tr '\n' ' ')"
-        case "$r" in
-            *enabled*) Ok "$p" "$p" ;;
-            *) printf '%s  - %s%s%s\n' "$C_DarkGray" "$p" "$(T " : déjà actif ou introuvable, ignoré" " : already enabled or not found, skipped")" "$C_0" ;;
-        esac
-    done
+    Undo_ProfileBatch $ST_DISABLED
+    Get_State
     if [ "$ST_HAS_ANIM" = 1 ]; then
         for k in window_animation_scale:"$ST_ANIM_WINDOW" transition_animation_scale:"$ST_ANIM_TRANSITION" animator_duration_scale:"$ST_ANIM_ANIMATOR"; do
             v="${k#*:}"; k="${k%%:*}"
@@ -750,12 +938,13 @@ Do_Restore() {
         for k in zenhome_title_b64 zenhome_title_mode zenhome_layout zenhome_dock zenhome_rev zenhome_interval; do Sh "settings delete global $k" >/dev/null; done
         Sh "rm -rf /sdcard/ZenHome" >/dev/null
     fi
-    ST_DISABLED=""; ST_LAUNCHER_DISABLED=""
+    in_list "$ST_LAUNCHER_DISABLED" "$ST_DISABLED" || ST_LAUNCHER_DISABLED=""
     Save_State
     Sh "input keyevent KEYCODE_HOME" >/dev/null
     sleep 6
     Capture_TV "apres_restauration"
-    Ok "Restauration terminée. Redémarrez la TV pour finir proprement." "Restore done. Restart the TV to finish cleanly."
+    if [ -n "$ST_DISABLED" ]; then Warn "Restauration incomplète : paquets conservés dans l'état, réessayez l'option 6." "Restore incomplete: packages retained in state, retry option 6."
+    else Ok "Restauration terminée. Redémarrez la TV pour finir proprement." "Restore done. Restart the TV to finish cleanly."; fi
 }
 
 Run_Choice() {
@@ -774,8 +963,9 @@ Run_Choice() {
 while true; do
     clear
     printf '%s  ╔══════════════════════════════════════════════╗%s\n' "$C_DarkCyan" "$C_0"
-    printf '%s  ║   %s  ║%s\n' "$C_DarkCyan" "$(T "Kit TV Android - allègement + Zen Home   " "Android TV kit - slimming + Zen Home      ")" "$C_0"
+    printf '%s  ║   %s  ║%s\n' "$C_DarkCyan" "$(T "Toshiba / Vestel Cosmos + Zen Home      " "Toshiba / Vestel Cosmos + Zen Home      ")" "$C_0"
     printf '%s  ╚══════════════════════════════════════════════╝%s\n' "$C_DarkCyan" "$C_0"
+    Show_Profile
     if [ -f "$CONF_FILE" ]; then printf '%s   TV : %s  (%s)%s\n' "$C_Gray" "$(json_str "$CONF_FILE" label)" "$(json_str "$CONF_FILE" target)" "$C_0"
     else Say "   Aucune TV choisie" "   No TV selected" DarkGray; fi
     echo
@@ -793,7 +983,7 @@ while true; do
     if [ "$ch" = "7" ]; then rm -f "$CONF_FILE"; Choose_TV; Pause_Kit; continue; fi
     case "$ch" in 1|2|3|4|5|6) ;; *) continue ;; esac
     log="$SAVES/journal_$(date +%Y%m%d).txt"
-    # journal de session, comme Start-Transcript dans kit.ps1
-    { echo "===== $(date) - menu $ch ====="; Run_Choice "$ch"; } 2>&1 | tee -a "$log"
+    # Keep detected identity in this shell so the next menu can display its profile.
+    { echo "===== $(date) - menu $ch ====="; Run_Choice "$ch"; } > >(tee -a "$log") 2>&1
     Pause_Kit
 done
